@@ -27,7 +27,7 @@ const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const CLAUDE_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
 
 async function callGemini(prompt) {
-  const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+  const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-002:generateContent";
   const sys = "Sen profesyonel bir seyahat danışmanısın. Yanıtını SADECE geçerli bir JSON formatında ver. Başka hiçbir açıklama, selamlama veya markdown kodu (```json vb.) kullanma.";
   const fullPrompt = `${sys}
 
