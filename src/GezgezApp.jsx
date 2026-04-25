@@ -47,8 +47,14 @@ ${prompt}`;
   const d = await r.json();
   const raw = d.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!raw) throw new Error("Gemini'den boş yanıt geldi.");
-  const clean = raw.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-  return JSON.parse(clean);
+  let clean = raw
+    .replace(/```json/gi, '')
+    .replace(/```/g, '')
+    .trim();
+  // Sadece ilk { ... } bloğunu al
+  const match = clean.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("JSON bulunamadı");
+  return JSON.parse(match[0]);
 }
 
 async function askGemini(prompt) {
@@ -81,7 +87,7 @@ ${ucusField}
 "budget":{"${isYurtici?"ulasim":"flight"}":"TL","hotel":"TL","food":"TL","activities":"TL","total_per_person":"TL","total_group":"TL"},
 "tips":["tavsiye 1","tavsiye 2"]
 }
-days dizisinde ${nights} gün olsun. Her alan max 40 karakter. JSON toplam 2000 karakteri geçmesin.
+days dizisinde ${nights} gün olsun. Her alan kesinlikle max 30 karakter. Kısa ve öz yaz. Uzun cümle kullanma.
 Eğer mod "Yerel Gurme" ise; popüler ve turistik restoranlar yerine yerel halkın müdavimi olduğu esnaf lokantaları, tabelasız aile işletmeleri, geleneksel yöntemlerle (fermentasyon, artisan üretim, tandır, taş fırın) üretim yapan noktaları öner. Hikayesi olan yemekleri, sadece belirli saatlerde çıkan sokak lezzetlerini ve yerel içecekleri (şalgam, boza, ayran, geleneksel şuruplar) ön plana çıkar. TripAdvisor listelerinden uzak dur.
 Bütçe tahminlerinde güncel Türkiye enflasyonunu, TL/EUR ve TL/USD kurunu ve yüksek sezonu (Haziran-Ağustos) dikkate al. Fiyatları her zaman üst sınırdan (kötümser/pessimistic) hesapla, kullanıcı sürprizle karşılaşmasın. Otel fiyatlarında "Booking.com'da şu an görünen orta-üst segment fiyat" gibi düşün.`;
 }
