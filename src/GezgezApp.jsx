@@ -844,7 +844,7 @@ export default function Gezgez() {
   return(
     <>
       <style>{CSS}</style>
-      <div style={{maxWidth:960,margin:"40px auto",boxShadow:"0 4px 32px rgba(0,0,0,0.10)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:14,overflow:"hidden"}}>
+      <div style={{maxWidth:1020,margin:"40px auto",boxShadow:"0 4px 32px rgba(0,0,0,0.10)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:14,overflow:"hidden"}}>
         {page.view==="landing"  &&<Landing  onSelectCat={cat=>goTo({view:"category",cat})} onPlan={(type)=>goTo({view:"plan",planType:type})}/>}
         {page.view==="category" &&<CategoryPage cat={page.cat} onSelectTour={t=>goTo({view:"tour",tour:t,cat:page.cat})} onBack={()=>goTo({view:"landing"})}/>}
         {page.view==="tour"     &&<TourDetail tour={page.tour} onBack={()=>goTo({view:"category",cat:page.cat})}/>}
