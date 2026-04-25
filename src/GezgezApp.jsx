@@ -48,7 +48,7 @@ ${prompt}`;
   const d = await r.json();
   const raw = d.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!raw) throw new Error("Gemini'den boş yanıt geldi.");
-  const clean = raw.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+  const clean = raw.replace(/```json/g, '').replace(/```/g, '').trim();
   return JSON.parse(clean);
 }
 
