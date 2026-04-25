@@ -24,7 +24,6 @@ async function storageSet(key, val) {
 }
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const CLAUDE_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
 
 async function callGemini(prompt) {
   const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
@@ -48,37 +47,13 @@ ${prompt}`;
   const d = await r.json();
   const raw = d.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!raw) throw new Error("Gemini'den boş yanıt geldi.");
-  const clean = raw.replace(/```json/g, '').replace(/```/g, '').trim();
-  return JSON.parse(clean);
-}
-
-async function callClaude(prompt) {
-  const sys = "Sen profesyonel bir seyahat danışmanısın. Yanıtını SADECE geçerli bir JSON formatında ver. Başka hiçbir açıklama veya markdown kullanma.";
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": CLAUDE_KEY,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true"
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 2000,
-      system: sys,
-      messages: [{ role: "user", content: prompt }]
-    })
-  });
-  if (!r.ok) throw new Error("Claude HTTP " + r.status);
-  const d = await r.json();
-  const raw = d.content?.[0]?.text;
-  if (!raw) throw new Error("Claude boş yanıt döndü.");
   const clean = raw.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
   return JSON.parse(clean);
 }
 
 async function askGemini(prompt) {
-  return await callGemini(prompt);
+  try { return await callGemini(prompt); }
+  catch(e) { throw e; }
 }
 
 function buildPrompt(city, from, to, mod, adults, children, childAges, note, isYurtici=false) {
@@ -831,14 +806,35 @@ function TourDetail({tour,onBack}) {
 
 export default function Gezgez() {
   const [page,setPage]=useState({view:"landing"});
+
+  // Browser geri tuşu desteği
+  useEffect(()=>{
+    const handlePop = ()=>{
+      setPage(prev=>{
+        if(prev.view==="plan") return {view:"landing"};
+        if(prev.view==="tour") return {view:"category",cat:prev.cat};
+        if(prev.view==="category") return {view:"landing"};
+        return {view:"landing"};
+      });
+    };
+    window.addEventListener("popstate", handlePop);
+    return ()=>window.removeEventListener("popstate", handlePop);
+  },[]);
+
+  // Her sayfa değişiminde history push et
+  const goTo = (newPage)=>{
+    window.history.pushState({},"","");
+    setPage(newPage);
+  };
+
   return(
     <>
       <style>{CSS}</style>
-      <div style={{border:"0.5px solid var(--color-border-tertiary)",borderRadius:14,overflow:"hidden"}}>
-        {page.view==="landing"  &&<Landing  onSelectCat={cat=>setPage({view:"category",cat})} onPlan={(type)=>setPage({view:"plan",planType:type})}/>}
-        {page.view==="category" &&<CategoryPage cat={page.cat} onSelectTour={t=>setPage({view:"tour",tour:t,cat:page.cat})} onBack={()=>setPage({view:"landing"})}/>}
-        {page.view==="tour"     &&<TourDetail tour={page.tour} onBack={()=>setPage({view:"category",cat:page.cat})}/>}
-        {page.view==="plan"     &&<PlanPage onBack={()=>setPage({view:"landing"})} planType={page.planType}/>}
+      <div style={{maxWidth:480,margin:"0 auto",boxShadow:"0 4px 32px rgba(0,0,0,0.10)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:14,overflow:"hidden"}}>
+        {page.view==="landing"  &&<Landing  onSelectCat={cat=>goTo({view:"category",cat})} onPlan={(type)=>goTo({view:"plan",planType:type})}/>}
+        {page.view==="category" &&<CategoryPage cat={page.cat} onSelectTour={t=>goTo({view:"tour",tour:t,cat:page.cat})} onBack={()=>goTo({view:"landing"})}/>}
+        {page.view==="tour"     &&<TourDetail tour={page.tour} onBack={()=>goTo({view:"category",cat:page.cat})}/>}
+        {page.view==="plan"     &&<PlanPage onBack={()=>goTo({view:"landing"})} planType={page.planType}/>}
       </div>
     </>
   );
