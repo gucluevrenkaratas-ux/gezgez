@@ -734,9 +734,7 @@ function Landing({onSelectCat,onPlan}) {
     <div>
       <PngBanner src="/banner-landing.png" height={200}>
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",padding:"1rem"}}>
-          <div style={{fontSize:44,marginBottom:6,marginTop:40}}>🧭</div>
-          <h1 style={{fontFamily:"Georgia,serif",fontWeight:400,fontSize:28,margin:"0 0 6px",color:"#1a3a5c",textShadow:"0 1px 3px rgba(255,255,255,0.8)"}}>Gezgez</h1>
-          <p style={{color:"#2a5080",fontSize:14,margin:0,fontWeight:500,textShadow:"0 1px 2px rgba(255,255,255,0.7)"}}>Gezgez ile her yer cebinde.</p>
+      
         </div>
       </PngBanner>
       <div style={{padding:"1.5rem 1.5rem",background:"var(--color-background-primary)",borderRadius:"12px 12px 0 0",marginTop:-12,position:"relative",zIndex:1}}>
