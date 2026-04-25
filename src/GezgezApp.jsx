@@ -209,7 +209,7 @@ const CSS = `
 @keyframes spin{to{transform:rotate(360deg)}}
 .gg-card{border:0.5px solid var(--color-border-tertiary);border-radius:12px;cursor:pointer;background:var(--color-background-primary);transition:transform .15s,box-shadow .15s}
 .gg-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,80,160,0.1)}
-.cal-day{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;user-select:none}
+.cal-day{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;user-select:none}
 .cal-day:hover:not(.om):not(.pp){background:#dbeeff}
 .ir{background:#dbeeff!important;border-radius:0!important}
 .rs{background:#378add!important;color:white!important;border-radius:50% 0 0 50%!important}
@@ -330,9 +330,9 @@ function DateRangePicker({from,to,onChange}) {
         <p style={{margin:0,fontSize:11,color:"#378add"}}>{step==="start"?"Gidiş tarihine tıkla":step==="end"?"Dönüş tarihine tıkla":"✓ Tarih seçildi"}</p>
       </div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px"}}>
-        <button onClick={prevM} style={{background:"none",border:"0.5px solid var(--color-border-tertiary)",borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
-        <p style={{margin:0,fontSize:14,fontWeight:500}}>{MONTHS_TR[vm]} {vy}</p>
-        <button onClick={nextM} style={{background:"none",border:"0.5px solid var(--color-border-tertiary)",borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+        <button onClick={prevM} style={{background:"none",border:"1.5px solid var(--color-border-tertiary)",borderRadius:6,width:30,height:30,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+        <p style={{margin:0,fontSize:18,fontWeight:700}}>{MONTHS_TR[vm]} {vy}</p>
+        <button onClick={nextM} style={{background:"none",border:"1.5px solid var(--color-border-tertiary)",borderRadius:6,width:30,height:30,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"0 8px"}}>
         {DAYS_TR.map(d=><div key={d} style={{textAlign:"center",fontSize:11,color:"var(--color-text-tertiary)",fontWeight:600,padding:"2px 0 6px"}}>{d}</div>)}
