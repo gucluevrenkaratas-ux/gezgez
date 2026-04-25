@@ -222,7 +222,13 @@ const CSS = `
 
 function TravelBg() {
   return(
-    function PngBanner({src, height=200}) {
+    <svg viewBox="0 0 800 340" ...>
+      ...
+    </svg>
+  );
+}
+
+function PngBanner({src, height=200}) {
   return(
     <div style={{position:"relative",height,overflow:"hidden"}}>
       <img src={src} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
@@ -636,7 +642,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
 
   return(
     <div>
-      <PngBanner src={isYurtici?"/banner-yurtici.png":"/banner-yurtdisi.png"} height={160}/><BackBtn onClick={onBack}/></BgHeader>
+     <PngBanner src={isYurtici?"/banner-yurtici.png":"/banner-yurtdisi.png"} height={160}/>
       <div style={{padding:"0 1.5rem 2rem",background:"var(--color-background-primary)"}}>
         <h2 style={{fontFamily:"Georgia,serif",fontWeight:400,fontSize:22,margin:"1.25rem 0 4px"}}>Tur Planla</h2>
         <p style={{color:"var(--color-text-secondary)",fontSize:13,margin:"0 0 20px"}}>Kişi sayısı, tarih ve tercihlerini gir.</p>
