@@ -78,8 +78,7 @@ async function callClaude(prompt) {
 }
 
 async function askGemini(prompt) {
-  try { return await callGemini(prompt); }
-  catch(e) { console.warn("Gemini hata, Claude deneniyor:", e.message); return await callClaude(prompt); }
+  return await callGemini(prompt);
 }
 
 function buildPrompt(city, from, to, mod, adults, children, childAges, note, isYurtici=false) {
