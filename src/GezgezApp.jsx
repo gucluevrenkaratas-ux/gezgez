@@ -209,7 +209,7 @@ const CSS = `
 @keyframes spin{to{transform:rotate(360deg)}}
 .gg-card{border:0.5px solid var(--color-border-tertiary);border-radius:12px;cursor:pointer;background:var(--color-background-primary);transition:transform .15s,box-shadow .15s}
 .gg-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,80,160,0.1)}
-.cal-day{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;user-select:none}
+.cal-day{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;user-select:none}
 .cal-day:hover:not(.om):not(.pp){background:#dbeeff}
 .ir{background:#dbeeff!important;border-radius:0!important}
 .rs{background:#378add!important;color:white!important;border-radius:50% 0 0 50%!important}
@@ -268,7 +268,7 @@ function TravelBg() {
   );
 }
 
-function PngBanner({src, height=250, children}) {
+function PngBanner({src, height=200, children}) {
   return(
     <div style={{position:"relative",height,overflow:"hidden"}}>
       <img src={src} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
@@ -314,30 +314,30 @@ function DateRangePicker({from,to,onChange}) {
   };
   const nights=from&&to?Math.round((fromKey(to)-fromKey(from))/86400000):0;
   return(
-    <div style={{background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:12,overflow:"hidden"}}>
+    <div style={{background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,overflow:"hidden"}}>
       <div style={{display:"flex",background:"#e6f1fb",borderBottom:"0.5px solid #b5d4f4"}}>
-        <div onClick={()=>setStep("start")} style={{flex:1,padding:"10px 14px",cursor:"pointer",borderRight:"0.5px solid #b5d4f4",background:step==="start"?"#c8dff7":"transparent"}}>
-          <p style={{margin:"0 0 1px",fontSize:10,color:"#185fa5",textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>Gidiş</p>
-          <p style={{margin:0,fontSize:14,fontWeight:500,color:"#1a3a5c"}}>{from?fmtShort(from):"Seç"}</p>
+        <div onClick={()=>setStep("start")} style={{flex:1,padding:"7px 10px",cursor:"pointer",borderRight:"0.5px solid #b5d4f4",background:step==="start"?"#c8dff7":"transparent"}}>
+          <p style={{margin:"0 0 1px",fontSize:9,color:"#185fa5",textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>Gidiş</p>
+          <p style={{margin:0,fontSize:13,fontWeight:500,color:"#1a3a5c"}}>{from?fmtShort(from):"Seç"}</p>
         </div>
-        <div onClick={()=>from&&setStep("end")} style={{flex:1,padding:"10px 14px",cursor:from?"pointer":"default",background:step==="end"?"#c8dff7":"transparent"}}>
-          <p style={{margin:"0 0 1px",fontSize:10,color:"#185fa5",textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>Dönüş</p>
-          <p style={{margin:0,fontSize:14,fontWeight:500,color:"#1a3a5c"}}>{to?fmtShort(to):"Seç"}</p>
+        <div onClick={()=>from&&setStep("end")} style={{flex:1,padding:"7px 10px",cursor:from?"pointer":"default",background:step==="end"?"#c8dff7":"transparent"}}>
+          <p style={{margin:"0 0 1px",fontSize:9,color:"#185fa5",textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>Dönüş</p>
+          <p style={{margin:0,fontSize:13,fontWeight:500,color:"#1a3a5c"}}>{to?fmtShort(to):"Seç"}</p>
         </div>
-        {nights>0&&<div style={{padding:"10px 12px",display:"flex",alignItems:"center"}}><span style={{fontSize:12,color:"#185fa5",fontWeight:500,whiteSpace:"nowrap"}}>{nights} gece</span></div>}
+        {nights>0&&<div style={{padding:"7px 10px",display:"flex",alignItems:"center"}}><span style={{fontSize:11,color:"#185fa5",fontWeight:500,whiteSpace:"nowrap"}}>{nights} gece</span></div>}
       </div>
-      <div style={{padding:"5px 14px",background:"#f0f7ff",borderBottom:"0.5px solid #dbeeff"}}>
-        <p style={{margin:0,fontSize:11,color:"#378add"}}>{step==="start"?"Gidiş tarihine tıkla":step==="end"?"Dönüş tarihine tıkla":"✓ Tarih seçildi"}</p>
+      <div style={{padding:"3px 10px",background:"#f0f7ff",borderBottom:"0.5px solid #dbeeff"}}>
+        <p style={{margin:0,fontSize:10,color:"#378add"}}>{step==="start"?"Gidiş tarihine tıkla":step==="end"?"Dönüş tarihine tıkla":"✓ Tarih seçildi"}</p>
       </div>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px"}}>
-        <button onClick={prevM} style={{background:"none",border:"1.5px solid var(--color-border-tertiary)",borderRadius:6,width:30,height:30,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
-        <p style={{margin:0,fontSize:18,fontWeight:700}}>{MONTHS_TR[vm]} {vy}</p>
-        <button onClick={nextM} style={{background:"none",border:"1.5px solid var(--color-border-tertiary)",borderRadius:6,width:30,height:30,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 10px"}}>
+        <button onClick={prevM} style={{background:"#e6f1fb",border:"1.5px solid #378add",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:16,fontWeight:700,color:"#185fa5",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+        <p style={{margin:0,fontSize:13,fontWeight:500}}>{MONTHS_TR[vm]} {vy}</p>
+        <button onClick={nextM} style={{background:"#e6f1fb",border:"1.5px solid #378add",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:16,fontWeight:700,color:"#185fa5",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"0 8px"}}>
-        {DAYS_TR.map(d=><div key={d} style={{textAlign:"center",fontSize:11,color:"var(--color-text-tertiary)",fontWeight:600,padding:"2px 0 6px"}}>{d}</div>)}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"0 6px"}}>
+        {DAYS_TR.map(d=><div key={d} style={{textAlign:"center",fontSize:10,color:"var(--color-text-tertiary)",fontWeight:600,padding:"1px 0 4px"}}>{d}</div>)}
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(7,34px)",justifyContent:"space-around",padding:"0 8px 10px",gap:"2px 0"}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(7,28px)",justifyContent:"space-around",padding:"0 6px 8px",gap:"1px 0"}}>
         {days.map((cell,i)=>(
           <div key={i} className={getCls(cell)} onClick={()=>cell.cur&&handleClick(cell.date)} onMouseEnter={()=>step==="end"&&setHover(cell.cur?cell.date:null)} onMouseLeave={()=>setHover(null)}>
             {cell.date.getDate()}
@@ -638,9 +638,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
 
   return(
     <div>
-      <PngBanner src={isYurtici?"/banner-yurtici.png":"/banner-yurtdisi.png"} height={250}>
-        <div style={{padding:"1.25rem 1.75rem"}}><BackBtn onClick={onBack}/></div>
-      </PngBanner>
+      <BgHeader height={90}><BackBtn onClick={onBack}/></BgHeader>
       <div style={{padding:"0 1.5rem 2rem",background:"var(--color-background-primary)"}}>
         <h2 style={{fontFamily:"Georgia,serif",fontWeight:400,fontSize:22,margin:"1.25rem 0 4px"}}>Tur Planla</h2>
         <p style={{color:"var(--color-text-secondary)",fontSize:13,margin:"0 0 20px"}}>Kişi sayısı, tarih ve tercihlerini gir.</p>
@@ -732,11 +730,14 @@ function Landing({onSelectCat,onPlan}) {
 
   return(
     <div>
-      <PngBanner src="/banner-landing.png" height={200}>
-        <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",padding:"1rem"}}>
-      
+      <div style={{position:"relative",height:200,overflow:"hidden",borderRadius:"12px 12px 0 0"}}>
+        <TravelBg/>
+        <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",padding:"1rem"}}>
+          <div style={{fontSize:44,marginBottom:6,marginTop:40}}>🧭</div>
+          <h1 style={{fontFamily:"Georgia,serif",fontWeight:400,fontSize:28,margin:"0 0 6px",color:"#1a3a5c",textShadow:"0 1px 3px rgba(255,255,255,0.8)"}}>Gezgez</h1>
+          <p style={{color:"#2a5080",fontSize:14,margin:0,fontWeight:500,textShadow:"0 1px 2px rgba(255,255,255,0.7)"}}>Gezgez ile her yer cebinde.</p>
         </div>
-      </PngBanner>
+      </div>
       <div style={{padding:"1.5rem 1.5rem",background:"var(--color-background-primary)",borderRadius:"12px 12px 0 0",marginTop:-12,position:"relative",zIndex:1}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:24}}>
           <button onClick={()=>onPlan("yurtici")} style={{padding:"14px 10px",border:"1.5px solid #0f6e56",borderRadius:10,background:"#e1f5ee",color:"#0f6e56",cursor:"pointer",fontSize:14,fontWeight:500}}>🇹🇷 Yurtiçi Gezi Planla</button>
@@ -844,7 +845,7 @@ export default function Gezgez() {
   return(
     <>
       <style>{CSS}</style>
-      <div style={{maxWidth:1020,margin:"40px auto",boxShadow:"0 4px 32px rgba(0,0,0,0.10)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:14,overflow:"hidden"}}>
+      <div style={{maxWidth:960,margin:"40px auto",boxShadow:"0 4px 32px rgba(0,0,0,0.10)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:14,overflow:"hidden"}}>
         {page.view==="landing"  &&<Landing  onSelectCat={cat=>goTo({view:"category",cat})} onPlan={(type)=>goTo({view:"plan",planType:type})}/>}
         {page.view==="category" &&<CategoryPage cat={page.cat} onSelectTour={t=>goTo({view:"tour",tour:t,cat:page.cat})} onBack={()=>goTo({view:"landing"})}/>}
         {page.view==="tour"     &&<TourDetail tour={page.tour} onBack={()=>goTo({view:"category",cat:page.cat})}/>}
