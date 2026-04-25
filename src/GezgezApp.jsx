@@ -52,9 +52,10 @@ ${prompt}`;
     .replace(/```/g, '')
     .trim();
   // Sadece ilk { ... } bloğunu al
-  const match = clean.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("JSON bulunamadı");
-  return JSON.parse(match[0]);
+  const firstBrace = clean.indexOf('{');
+  const lastBrace = clean.lastIndexOf('}');
+  if(firstBrace===-1||lastBrace===-1||lastBrace<=firstBrace) throw new Error("JSON bulunamadı");
+  return JSON.parse(clean.slice(firstBrace, lastBrace+1));
 }
 
 async function askGemini(prompt) {
@@ -63,7 +64,7 @@ async function askGemini(prompt) {
 }
 
 function buildPrompt(city, from, to, mod, adults, children, childAges, note, isYurtici=false) {
-  const nights = Math.max(1, Math.round((fromKey(to) - fromKey(from)) / 86400000));
+  const nights = Math.max(1, Math.ceil((fromKey(to) - fromKey(from)) / 86400000));
   const kisi = `${adults} yetişkin${children > 0 ? `, ${children} çocuk (${childAges.map(a => a===0?"bebek":a+"y").join(",")})` : ""}`;
   const ekIstek = note.trim() ? ` ${note.trim()}` : "";
   const guzergah = isYurtici ? `Ankara-${city.name}` : `Ankara-${city.name}`;
@@ -205,11 +206,27 @@ const TOURS = {
 };
 
 const CSS = `
+:root {
+  --gg-t1: 9px; --gg-t2: 11px; --gg-t3: 13px; --gg-t4: 15px; --gg-t5: 17px;
+}
+@media (max-width: 640px) {
+  :root {
+    --gg-t1: 11px; --gg-t2: 13px; --gg-t3: 15px; --gg-t4: 17px; --gg-t5: 19px;
+  }
+  .gg-root {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .cal-day { width: 36px !important; height: 36px !important; }
+  .cal-grid { grid-template-columns: repeat(7, 36px) !important; }
+}
 @keyframes sway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 .gg-card{border:0.5px solid var(--color-border-tertiary);border-radius:12px;cursor:pointer;background:var(--color-background-primary);transition:transform .15s,box-shadow .15s}
 .gg-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,80,160,0.1)}
-.cal-day{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;user-select:none}
+.cal-day{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:var(--gg-t2);cursor:pointer;user-select:none}
 .cal-day:hover:not(.om):not(.pp){background:#dbeeff}
 .ir{background:#dbeeff!important;border-radius:0!important}
 .rs{background:#378add!important;color:white!important;border-radius:50% 0 0 50%!important}
@@ -270,8 +287,8 @@ function TravelBg() {
 
 function PngBanner({src, height=250, children}) {
   return(
-    <div style={{position:"relative",height,overflow:"hidden"}}>
-      <img src={src} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+    <div style={{position:"relative",height,overflow:"hidden",background:"#dbeeff"}}>
+      <img src={src} onError={e=>e.target.style.display="none"} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
       {children&&<div style={{position:"relative",zIndex:1,height:"100%"}}>{children}</div>}
     </div>
   );
@@ -296,48 +313,53 @@ function DateRangePicker({from,to,onChange}) {
   const nextM=()=>{if(vm===11){setVy(y=>y+1);setVm(0);}else setVm(m=>m+1);};
   const handleClick=(d)=>{
     if(step==="start"||step==="done"){ onChange(toKey(d),""); setStep("end"); }
-    else { if(startD&&d<startD){ onChange(toKey(d),""); setStep("end"); } else { onChange(from,toKey(d)); setStep("done"); } }
+    else {
+      if(startD&&d<startD) return; // end seçiminde gidiş tarihinden önce seçime izin verme
+      onChange(from,toKey(d)); setStep("done");
+    }
   };
   const getCls=(cell)=>{
     if(!cell.cur) return "cal-day om";
-    const d=cell.date, past=d<today, isStart=startD&&sameDay(d,startD), isEnd=endD&&sameDay(d,endD);
-    const effEnd=endD||(hover&&step==="end"?hover:null);
-    const inRange=startD&&effEnd&&d>startD&&d<effEnd;
-    let cls="cal-day";
-    if(past) return cls+" pp";
-    if(sameDay(d,today)&&!isStart&&!isEnd) cls+=" td";
-    if(isStart&&isEnd) return cls+" ss";
-    if(isStart&&effEnd) return cls+" rs";
-    if(isEnd) return cls+" re";
-    if(inRange) return cls+" ir";
-    return cls;
+    const d=cell.date;
+    if(d<today) return "cal-day pp";
+    const isStart=startD&&sameDay(d,startD);
+    const isEnd=endD&&sameDay(d,endD);
+    const isToday=sameDay(d,today);
+    const rangeEnd=endD||(hover&&step==="end"?hover:null);
+    const inRange=startD&&rangeEnd&&d>startD&&d<rangeEnd;
+    if(isStart&&isEnd) return "cal-day ss";
+    if(isStart) return "cal-day rs";
+    if(isEnd) return "cal-day re";
+    if(inRange) return "cal-day ir";
+    if(isToday) return "cal-day td";
+    return "cal-day";
   };
   const nights=from&&to?Math.round((fromKey(to)-fromKey(from))/86400000):0;
   return(
     <div style={{background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,overflow:"hidden"}}>
       <div style={{display:"flex",background:"#e6f1fb",borderBottom:"0.5px solid #b5d4f4"}}>
         <div onClick={()=>setStep("start")} style={{flex:1,padding:"7px 10px",cursor:"pointer",borderRight:"0.5px solid #b5d4f4",background:step==="start"?"#c8dff7":"transparent"}}>
-          <p style={{margin:"0 0 1px",fontSize:9,color:"#185fa5",textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>Gidiş</p>
-          <p style={{margin:0,fontSize:13,fontWeight:500,color:"#1a3a5c"}}>{from?fmtShort(from):"Seç"}</p>
+          <p style={{margin:"0 0 1px",fontSize:"var(--gg-t1)",color:"#185fa5",textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>Gidiş</p>
+          <p style={{margin:0,fontSize:"var(--gg-t3)",fontWeight:500,color:"#1a3a5c"}}>{from?fmtShort(from):"Seç"}</p>
         </div>
         <div onClick={()=>from&&setStep("end")} style={{flex:1,padding:"7px 10px",cursor:from?"pointer":"default",background:step==="end"?"#c8dff7":"transparent"}}>
-          <p style={{margin:"0 0 1px",fontSize:9,color:"#185fa5",textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>Dönüş</p>
-          <p style={{margin:0,fontSize:13,fontWeight:500,color:"#1a3a5c"}}>{to?fmtShort(to):"Seç"}</p>
+          <p style={{margin:"0 0 1px",fontSize:"var(--gg-t1)",color:"#185fa5",textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>Dönüş</p>
+          <p style={{margin:0,fontSize:"var(--gg-t3)",fontWeight:500,color:"#1a3a5c"}}>{to?fmtShort(to):"Seç"}</p>
         </div>
-        {nights>0&&<div style={{padding:"7px 10px",display:"flex",alignItems:"center"}}><span style={{fontSize:11,color:"#185fa5",fontWeight:500,whiteSpace:"nowrap"}}>{nights} gece</span></div>}
+        {nights>0&&<div style={{padding:"7px 10px",display:"flex",alignItems:"center"}}><span style={{fontSize:"var(--gg-t2)",color:"#185fa5",fontWeight:500,whiteSpace:"nowrap"}}>{nights} gece</span></div>}
       </div>
       <div style={{padding:"3px 10px",background:"#f0f7ff",borderBottom:"0.5px solid #dbeeff"}}>
-        <p style={{margin:0,fontSize:10,color:"#378add"}}>{step==="start"?"Gidiş tarihine tıkla":step==="end"?"Dönüş tarihine tıkla":"✓ Tarih seçildi"}</p>
+        <p style={{margin:0,fontSize:"var(--gg-t1)",color:"#378add"}}>{step==="start"?"Gidiş tarihine tıkla":step==="end"?"Dönüş tarihine tıkla":"✓ Tarih seçildi"}</p>
       </div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 10px"}}>
-        <button onClick={prevM} style={{background:"#e6f1fb",border:"1.5px solid #378add",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:16,fontWeight:700,color:"#185fa5",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
-        <p style={{margin:0,fontSize:13,fontWeight:500}}>{MONTHS_TR[vm]} {vy}</p>
-        <button onClick={nextM} style={{background:"#e6f1fb",border:"1.5px solid #378add",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:16,fontWeight:700,color:"#185fa5",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+        <button onClick={prevM} style={{background:"#e6f1fb",border:"1.5px solid #378add",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:"var(--gg-t4)",fontWeight:700,color:"#185fa5",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+        <p style={{margin:0,fontSize:"var(--gg-t3)",fontWeight:500}}>{MONTHS_TR[vm]} {vy}</p>
+        <button onClick={nextM} style={{background:"#e6f1fb",border:"1.5px solid #378add",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:"var(--gg-t4)",fontWeight:700,color:"#185fa5",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"0 6px"}}>
-        {DAYS_TR.map(d=><div key={d} style={{textAlign:"center",fontSize:10,color:"var(--color-text-tertiary)",fontWeight:600,padding:"1px 0 4px"}}>{d}</div>)}
+        {DAYS_TR.map(d=><div key={d} style={{textAlign:"center",fontSize:"var(--gg-t1)",color:"var(--color-text-tertiary)",fontWeight:600,padding:"1px 0 4px"}}>{d}</div>)}
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(7,28px)",justifyContent:"space-around",padding:"0 6px 8px",gap:"1px 0"}}>
+      <div className="cal-grid" style={{display:"grid",gridTemplateColumns:"repeat(7,28px)",justifyContent:"space-around",padding:"0 6px 8px",gap:"1px 0"}}>
         {days.map((cell,i)=>(
           <div key={i} className={getCls(cell)} onClick={()=>cell.cur&&handleClick(cell.date)} onMouseEnter={()=>step==="end"&&setHover(cell.cur?cell.date:null)} onMouseLeave={()=>setHover(null)}>
             {cell.date.getDate()}
@@ -350,10 +372,10 @@ function DateRangePicker({from,to,onChange}) {
 
 function Tag({children}) {
   const s=TAG_COLORS[children]||{bg:"#f1efe8",color:"#5f5e5a",border:"#d3d1c7"};
-  return <span style={{display:"inline-block",padding:"3px 9px",borderRadius:20,fontSize:11,background:s.bg,color:s.color,border:`0.5px solid ${s.border}`,fontWeight:500}}>{children}</span>;
+  return <span style={{display:"inline-block",padding:"3px 9px",borderRadius:20,fontSize:"var(--gg-t2)",background:s.bg,color:s.color,border:`0.5px solid ${s.border}`,fontWeight:500}}>{children}</span>;
 }
 function BackBtn({onClick}) {
-  return <button onClick={onClick} style={{padding:"7px 14px",border:"0.5px solid rgba(255,255,255,0.7)",borderRadius:8,background:"rgba(255,255,255,0.85)",color:"#333",cursor:"pointer",fontSize:13,marginBottom:18}}>← Geri</button>;
+  return <button onClick={onClick} style={{padding:"7px 14px",border:"0.5px solid rgba(255,255,255,0.7)",borderRadius:8,background:"rgba(255,255,255,0.85)",color:"#333",cursor:"pointer",fontSize:"var(--gg-t3)",marginBottom:18}}>← Geri</button>;
 }
 function BgHeader({children,height=120}) {
   return(
@@ -364,19 +386,19 @@ function BgHeader({children,height=120}) {
   );
 }
 function SLabel({children}) {
-  return <p style={{fontSize:11,fontWeight:600,color:"var(--color-text-tertiary)",textTransform:"uppercase",letterSpacing:"0.07em",margin:"0 0 10px"}}>{children}</p>;
+  return <p style={{fontSize:"var(--gg-t2)",fontWeight:600,color:"var(--color-text-tertiary)",textTransform:"uppercase",letterSpacing:"0.07em",margin:"0 0 10px"}}>{children}</p>;
 }
 function Counter({label,sub,value,min,max,onChange}) {
   return(
     <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",border:"0.5px solid var(--color-border-tertiary)",borderRadius:10,background:"var(--color-background-primary)"}}>
       <div>
-        <p style={{margin:0,fontSize:14,fontWeight:500}}>{label}</p>
-        {sub&&<p style={{margin:0,fontSize:11,color:"var(--color-text-tertiary)"}}>{sub}</p>}
+        <p style={{margin:0,fontSize:"var(--gg-t3)",fontWeight:500}}>{label}</p>
+        {sub&&<p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)"}}>{sub}</p>}
       </div>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <button onClick={()=>onChange(Math.max(min,value-1))} disabled={value<=min} style={{width:30,height:30,borderRadius:"50%",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",cursor:value<=min?"not-allowed":"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",opacity:value<=min?0.35:1}}>−</button>
-        <span style={{fontSize:16,fontWeight:600,minWidth:18,textAlign:"center"}}>{value}</span>
-        <button onClick={()=>onChange(Math.min(max,value+1))} disabled={value>=max} style={{width:30,height:30,borderRadius:"50%",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",cursor:value>=max?"not-allowed":"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",opacity:value>=max?0.35:1}}>+</button>
+        <button onClick={()=>onChange(Math.max(min,value-1))} disabled={value<=min} style={{width:30,height:30,borderRadius:"50%",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",cursor:value<=min?"not-allowed":"pointer",fontSize:"var(--gg-t5)",display:"flex",alignItems:"center",justifyContent:"center",opacity:value<=min?0.35:1}}>−</button>
+        <span style={{fontSize:"var(--gg-t4)",fontWeight:600,minWidth:18,textAlign:"center"}}>{value}</span>
+        <button onClick={()=>onChange(Math.min(max,value+1))} disabled={value>=max} style={{width:30,height:30,borderRadius:"50%",border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",cursor:value>=max?"not-allowed":"pointer",fontSize:"var(--gg-t5)",display:"flex",alignItems:"center",justifyContent:"center",opacity:value>=max?0.35:1}}>+</button>
       </div>
     </div>
   );
@@ -390,7 +412,7 @@ function ResultView({city,from,to,mod,plan,onReset}) {
 
   const Section=({icon,title,children})=>(
     <div style={{marginBottom:18,padding:"14px 16px",background:"var(--color-background-secondary)",borderRadius:12,border:"0.5px solid var(--color-border-tertiary)"}}>
-      <p style={{margin:"0 0 10px",fontSize:13,fontWeight:600}}>{icon} {title}</p>
+      <p style={{margin:"0 0 10px",fontSize:"var(--gg-t3)",fontWeight:600}}>{icon} {title}</p>
       {children}
     </div>
   );
@@ -403,19 +425,19 @@ function ResultView({city,from,to,mod,plan,onReset}) {
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:32}}>{city?.flag}</span>
             <div>
-              <p style={{margin:0,fontSize:17,fontWeight:600,color:"#1a3a5c",textShadow:"0 1px 3px rgba(255,255,255,0.8)"}}>{plan.title||city?.name}</p>
-              <p style={{margin:0,fontSize:12,color:"#2a5080",fontWeight:500}}>{fmtShort(from)} → {fmtShort(to)}</p>
-              {plan.subtitle&&<p style={{margin:"2px 0 0",fontSize:11,color:"#3a6090"}}>{plan.subtitle}</p>}
+              <p style={{margin:0,fontSize:"var(--gg-t5)",fontWeight:600,color:"#1a3a5c",textShadow:"0 1px 3px rgba(255,255,255,0.8)"}}>{plan.title||city?.name}</p>
+              <p style={{margin:0,fontSize:"var(--gg-t2)",color:"#2a5080",fontWeight:500}}>{fmtShort(from)} → {fmtShort(to)}</p>
+              {plan.subtitle&&<p style={{margin:"2px 0 0",fontSize:"var(--gg-t2)",color:"#3a6090"}}>{plan.subtitle}</p>}
             </div>
           </div>
-          <button onClick={onReset} style={{padding:"6px 12px",border:"0.5px solid rgba(255,255,255,0.7)",borderRadius:8,background:"rgba(255,255,255,0.85)",color:"#333",cursor:"pointer",fontSize:12,flexShrink:0}}>Yeniden planla</button>
+          <button onClick={onReset} style={{padding:"6px 12px",border:"0.5px solid rgba(255,255,255,0.7)",borderRadius:8,background:"rgba(255,255,255,0.85)",color:"#333",cursor:"pointer",fontSize:"var(--gg-t2)",flexShrink:0}}>Yeniden planla</button>
         </div>
       </div>
 
       <div style={{padding:"1.25rem 1.25rem",background:"var(--color-background-primary)"}}>
         <div style={{display:"flex",gap:8,marginBottom:16}}>
-          <a href={sUrl} target="_blank" rel="noreferrer" style={{flex:1,display:"block",padding:"10px",border:"0.5px solid #b5d4f4",borderRadius:8,background:"#e6f1fb",color:"#185fa5",textAlign:"center",fontSize:13,fontWeight:500,textDecoration:"none"}}>✈️ Skyscanner</a>
-          <a href={bUrl} target="_blank" rel="noreferrer" style={{flex:1,display:"block",padding:"10px",border:"0.5px solid #9fe1cb",borderRadius:8,background:"#e1f5ee",color:"#0f6e56",textAlign:"center",fontSize:13,fontWeight:500,textDecoration:"none"}}>🏨 Booking</a>
+          <a href={sUrl} target="_blank" rel="noreferrer" style={{flex:1,display:"block",padding:"10px",border:"0.5px solid #b5d4f4",borderRadius:8,background:"#e6f1fb",color:"#185fa5",textAlign:"center",fontSize:"var(--gg-t3)",fontWeight:500,textDecoration:"none"}}>✈️ Skyscanner</a>
+          <a href={bUrl} target="_blank" rel="noreferrer" style={{flex:1,display:"block",padding:"10px",border:"0.5px solid #9fe1cb",borderRadius:8,background:"#e1f5ee",color:"#0f6e56",textAlign:"center",fontSize:"var(--gg-t3)",fontWeight:500,textDecoration:"none"}}>🏨 Booking</a>
         </div>
 
         {plan.budget&&(
@@ -423,21 +445,21 @@ function ResultView({city,from,to,mod,plan,onReset}) {
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
               {[["✈️ Uçak",plan.budget.flight],["🏨 Konaklama",plan.budget.hotel],["🍽️ Yeme",plan.budget.food],["🎭 Aktivite",plan.budget.activities]].map(([k,v])=>v?(
                 <div key={k} style={{background:"var(--color-background-primary)",borderRadius:8,padding:"8px 10px",border:"0.5px solid var(--color-border-tertiary)"}}>
-                  <p style={{margin:"0 0 2px",fontSize:11,color:"var(--color-text-tertiary)"}}>{k}</p>
-                  <p style={{margin:0,fontSize:12,fontWeight:500}}>{v}</p>
+                  <p style={{margin:"0 0 2px",fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)"}}>{k}</p>
+                  <p style={{margin:0,fontSize:"var(--gg-t2)",fontWeight:500}}>{v}</p>
                 </div>
               ):null)}
             </div>
             {plan.budget.total_per_person&&(
               <div style={{marginTop:10,padding:"10px 12px",background:"#e6f1fb",borderRadius:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:13,color:"#185fa5"}}>Kişi başı toplam</span>
-                <span style={{fontSize:15,fontWeight:700,color:"#185fa5"}}>{plan.budget.total_per_person}</span>
+                <span style={{fontSize:"var(--gg-t3)",color:"#185fa5"}}>Kişi başı toplam</span>
+                <span style={{fontSize:"var(--gg-t4)",fontWeight:700,color:"#185fa5"}}>{plan.budget.total_per_person}</span>
               </div>
             )}
             {plan.budget.total_group&&(
               <div style={{marginTop:6,padding:"10px 12px",background:"#eeedfe",borderRadius:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:13,color:"#534ab7"}}>Grup toplam</span>
-                <span style={{fontSize:15,fontWeight:700,color:"#534ab7"}}>{plan.budget.total_group}</span>
+                <span style={{fontSize:"var(--gg-t3)",color:"#534ab7"}}>Grup toplam</span>
+                <span style={{fontSize:"var(--gg-t4)",fontWeight:700,color:"#534ab7"}}>{plan.budget.total_group}</span>
               </div>
             )}
           </Section>
@@ -445,14 +467,14 @@ function ResultView({city,from,to,mod,plan,onReset}) {
 
         {(plan.flight||plan.ulasim)&&(
           <Section icon={plan.ulasim?"🚌":"✈️"} title={plan.ulasim?"Ulaşım Bilgisi":"Uçuş Bilgisi"}>
-            <p style={{margin:"0 0 6px",fontSize:13,lineHeight:1.6}}>{(plan.flight||plan.ulasim).info}</p>
-            {(plan.flight||plan.ulasim).tip&&<p style={{margin:0,fontSize:12,color:"var(--color-text-secondary)",fontStyle:"italic"}}>💡 {(plan.flight||plan.ulasim).tip}</p>}
+            <p style={{margin:"0 0 6px",fontSize:"var(--gg-t3)",lineHeight:1.6}}>{(plan.flight||plan.ulasim).info}</p>
+            {(plan.flight||plan.ulasim).tip&&<p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)",fontStyle:"italic"}}>💡 {(plan.flight||plan.ulasim).tip}</p>}
           </Section>
         )}
 
         {plan.weather&&(
           <Section icon="🌤️" title="Mevsim & Hava">
-            <p style={{margin:0,fontSize:13,lineHeight:1.6}}>{plan.weather}</p>
+            <p style={{margin:0,fontSize:"var(--gg-t3)",lineHeight:1.6}}>{plan.weather}</p>
           </Section>
         )}
 
@@ -460,11 +482,11 @@ function ResultView({city,from,to,mod,plan,onReset}) {
           <Section icon="🏨" title="Konaklama Önerileri">
             {fhInx&&(
               <div style={{marginBottom:10,padding:"10px 12px",background:"#e1f5ee",borderRadius:8,border:"0.5px solid #9fe1cb"}}>
-                <p style={{margin:"0 0 6px",fontSize:11,fontWeight:600,color:"#0f6e56"}}>Küratöre Edilmiş Aile Otelleri</p>
+                <p style={{margin:"0 0 6px",fontSize:"var(--gg-t2)",fontWeight:600,color:"#0f6e56"}}>Küratöre Edilmiş Aile Otelleri</p>
                 {fhInx.map((h,i)=>(
                   <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:i<fhInx.length-1?6:0}}>
-                    <div><p style={{margin:0,fontSize:12,fontWeight:500,color:"#085041"}}>{h.name}</p><p style={{margin:0,fontSize:11,color:"#0f6e56"}}>{h.area} — {h.note}</p></div>
-                    <a href={`https://www.booking.com/search.tr.html?ss=${encodeURIComponent(h.name)}`} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#0f6e56",textDecoration:"none",whiteSpace:"nowrap",marginLeft:8,padding:"3px 8px",border:"0.5px solid #0f6e56",borderRadius:5}}>Booking ›</a>
+                    <div><p style={{margin:0,fontSize:"var(--gg-t2)",fontWeight:500,color:"#085041"}}>{h.name}</p><p style={{margin:0,fontSize:"var(--gg-t2)",color:"#0f6e56"}}>{h.area} — {h.note}</p></div>
+                    <a href={`https://www.booking.com/search.tr.html?ss=${encodeURIComponent(h.name)}`} target="_blank" rel="noreferrer" style={{fontSize:"var(--gg-t2)",color:"#0f6e56",textDecoration:"none",whiteSpace:"nowrap",marginLeft:8,padding:"3px 8px",border:"0.5px solid #0f6e56",borderRadius:5}}>Booking ›</a>
                   </div>
                 ))}
               </div>
@@ -476,13 +498,13 @@ function ResultView({city,from,to,mod,plan,onReset}) {
               <div key={i} style={{padding:"10px 0",borderBottom:i<plan.hotels.length-1?"0.5px solid var(--color-border-tertiary)":"none"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                   <div style={{flex:1}}>
-                    <p style={{margin:0,fontSize:13,fontWeight:500}}>{h.name}</p>
-                    <p style={{margin:"2px 0 0",fontSize:11,color:"var(--color-text-secondary)"}}>{h.area}{h.note?` — ${h.note}`:""}</p>
+                    <p style={{margin:0,fontSize:"var(--gg-t3)",fontWeight:500}}>{h.name}</p>
+                    <p style={{margin:"2px 0 0",fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)"}}>{h.area}{h.note?` — ${h.note}`:""}</p>
                   </div>
                   {h.price&&(
                     <div style={{display:"flex",alignItems:"center",gap:6,marginLeft:8,flexShrink:0}}>
-                      <span style={{fontSize:12,color:"var(--color-text-tertiary)",fontWeight:400,textDecoration:"line-through"}}>{h.price}</span>
-                      <a href={bHotelUrl} target="_blank" rel="noreferrer" style={{fontSize:11,padding:"3px 8px",border:"0.5px solid #b5d4f4",borderRadius:6,background:"#e6f1fb",color:"#185fa5",textDecoration:"none",fontWeight:500,whiteSpace:"nowrap"}}>Fiyatı sorgula ↗</a>
+                      <span style={{fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)",fontWeight:400,textDecoration:"line-through"}}>{h.price}</span>
+                      <a href={bHotelUrl} target="_blank" rel="noreferrer" style={{fontSize:"var(--gg-t2)",padding:"3px 8px",border:"0.5px solid #b5d4f4",borderRadius:6,background:"#e6f1fb",color:"#185fa5",textDecoration:"none",fontWeight:500,whiteSpace:"nowrap"}}>Fiyatı sorgula ↗</a>
                     </div>
                   )}
                 </div>
@@ -494,27 +516,27 @@ function ResultView({city,from,to,mod,plan,onReset}) {
 
         {plan.days&&plan.days.length>0&&(
           <div style={{marginBottom:18}}>
-            <p style={{fontSize:11,fontWeight:600,color:"var(--color-text-tertiary)",textTransform:"uppercase",letterSpacing:"0.07em",margin:"0 0 10px"}}>📅 Günlük Program</p>
+            <p style={{fontSize:"var(--gg-t2)",fontWeight:600,color:"var(--color-text-tertiary)",textTransform:"uppercase",letterSpacing:"0.07em",margin:"0 0 10px"}}>📅 Günlük Program</p>
             <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:8,marginBottom:12}}>
               {plan.days.map((d,i)=>(
-                <button key={i} onClick={()=>setActiveDay(i)} style={{flexShrink:0,padding:"6px 14px",borderRadius:20,border:`1.5px solid ${activeDay===i?"#378add":"var(--color-border-tertiary)"}`,background:activeDay===i?"#e6f1fb":"var(--color-background-primary)",color:activeDay===i?"#185fa5":"var(--color-text-secondary)",fontSize:12,fontWeight:activeDay===i?600:400,cursor:"pointer",whiteSpace:"nowrap"}}>
+                <button key={i} onClick={()=>setActiveDay(i)} style={{flexShrink:0,padding:"6px 14px",borderRadius:20,border:`1.5px solid ${activeDay===i?"#378add":"var(--color-border-tertiary)"}`,background:activeDay===i?"#e6f1fb":"var(--color-background-primary)",color:activeDay===i?"#185fa5":"var(--color-text-secondary)",fontSize:"var(--gg-t2)",fontWeight:activeDay===i?600:400,cursor:"pointer",whiteSpace:"nowrap"}}>
                   {d.day}. gün
                 </button>
               ))}
             </div>
             {plan.days[activeDay]&&(
               <div style={{padding:"12px 14px",background:"var(--color-background-secondary)",borderRadius:12,border:"0.5px solid var(--color-border-tertiary)"}}>
-                <p style={{margin:"0 0 12px",fontSize:14,fontWeight:600}}>{plan.days[activeDay].title}</p>
+                <p style={{margin:"0 0 12px",fontSize:"var(--gg-t3)",fontWeight:600}}>{plan.days[activeDay].title}</p>
                 {(plan.days[activeDay].slots||plan.days[activeDay].activities||[]).map((s,i)=>{
                   const isStr = typeof s === "string";
                   return(
                     <div key={i} style={{display:"flex",gap:10,marginBottom:10,paddingLeft:4}}>
                       <div style={{width:2,background:"var(--color-border-secondary)",borderRadius:2,flexShrink:0,marginTop:4}}/>
                       <div style={{flex:1}}>
-                        {!isStr&&s.time&&<p style={{margin:"0 0 1px",fontSize:10,color:"var(--color-text-tertiary)",fontWeight:600,letterSpacing:"0.05em"}}>{s.time.toUpperCase()}</p>}
-                        {!isStr&&s.place&&<p style={{margin:"0 0 2px",fontSize:13,fontWeight:500}}>{s.place}</p>}
-                        <p style={{margin:0,fontSize:12,color:"var(--color-text-secondary)",lineHeight:1.5}}>{isStr?s:s.desc}</p>
-                        {!isStr&&s.food&&<div style={{marginTop:4,display:"inline-flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:16,background:"#faeeda",border:"0.5px solid #fac775"}}><span style={{fontSize:11}}>🍽️</span><span style={{fontSize:11,color:"#854f0b",fontWeight:500}}>{s.food}</span></div>}
+                        {!isStr&&s.time&&<p style={{margin:"0 0 1px",fontSize:"var(--gg-t1)",color:"var(--color-text-tertiary)",fontWeight:600,letterSpacing:"0.05em"}}>{s.time.toUpperCase()}</p>}
+                        {!isStr&&s.place&&<p style={{margin:"0 0 2px",fontSize:"var(--gg-t3)",fontWeight:500}}>{s.place}</p>}
+                        <p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)",lineHeight:1.5}}>{isStr?s:s.desc}</p>
+                        {!isStr&&s.food&&<div style={{marginTop:4,display:"inline-flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:16,background:"#faeeda",border:"0.5px solid #fac775"}}><span style={{fontSize:"var(--gg-t2)"}}>🍽️</span><span style={{fontSize:"var(--gg-t2)",color:"#854f0b",fontWeight:500}}>{s.food}</span></div>}
                       </div>
                     </div>
                   );
@@ -527,7 +549,7 @@ function ResultView({city,from,to,mod,plan,onReset}) {
         {plan.tastes&&plan.tastes.length>0&&(
           <Section icon="🍽️" title="Mutlaka Dene">
             {plan.tastes.map((t,i)=>(
-              <p key={i} style={{margin:i<plan.tastes.length-1?"0 0 6px":0,fontSize:12,lineHeight:1.5}}>· {t}</p>
+              <p key={i} style={{margin:i<plan.tastes.length-1?"0 0 6px":0,fontSize:"var(--gg-t2)",lineHeight:1.5}}>· {t}</p>
             ))}
           </Section>
         )}
@@ -535,14 +557,14 @@ function ResultView({city,from,to,mod,plan,onReset}) {
         {plan.tips&&plan.tips.length>0&&(
           <Section icon="💡" title="Seyahat Tavsiyeleri">
             {plan.tips.map((t,i)=>(
-              <p key={i} style={{margin:i<plan.tips.length-1?"0 0 6px":0,fontSize:12,lineHeight:1.5}}>· {t}</p>
+              <p key={i} style={{margin:i<plan.tips.length-1?"0 0 6px":0,fontSize:"var(--gg-t2)",lineHeight:1.5}}>· {t}</p>
             ))}
           </Section>
         )}
 
         <div style={{marginTop:8,padding:"10px 14px",background:"#f0f7ff",borderRadius:10,border:"0.5px solid #dbeeff"}}>
-          <p style={{margin:"0 0 4px",fontSize:12,fontWeight:600,color:"#185fa5"}}>📊 Bütçe Notu</p>
-          <p style={{margin:0,fontSize:11,color:"#2a5080",lineHeight:1.6}}>Tahmini bütçe, geçmiş seyahat verilerine ve üst sınır hesaplamasına dayanır. Otel ve uçuş fiyatları doluluk oranı ile döviz kuruna göre <strong>%20–30 sapma</strong> gösterebilir. Kesin fiyat için Booking ve Skyscanner linklerini kullanın.</p>
+          <p style={{margin:"0 0 4px",fontSize:"var(--gg-t2)",fontWeight:600,color:"#185fa5"}}>📊 Bütçe Notu</p>
+          <p style={{margin:0,fontSize:"var(--gg-t2)",color:"#2a5080",lineHeight:1.6}}>Tahmini bütçe, geçmiş seyahat verilerine ve üst sınır hesaplamasına dayanır. Otel ve uçuş fiyatları doluluk oranı ile döviz kuruna göre <strong>%20–30 sapma</strong> gösterebilir. Kesin fiyat için Booking ve Skyscanner linklerini kullanın.</p>
         </div>
       </div>
     </div>
@@ -561,10 +583,10 @@ function RecentSearches({searches,onSelect}) {
           <div key={i} onClick={()=>onSelect(s)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",marginBottom:6,border:"0.5px solid var(--color-border-tertiary)",borderRadius:10,cursor:"pointer",background:"var(--color-background-primary)"}}>
             <span style={{fontSize:20}}>{c.flag}</span>
             <div style={{flex:1}}>
-              <p style={{margin:0,fontSize:13,fontWeight:500}}>{c.name}</p>
-              <p style={{margin:0,fontSize:11,color:"var(--color-text-secondary)"}}>{fmtShort(s.from)} → {fmtShort(s.to)} · {MODS.find(m=>m.id===s.mod)?.label}</p>
+              <p style={{margin:0,fontSize:"var(--gg-t3)",fontWeight:500}}>{c.name}</p>
+              <p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)"}}>{fmtShort(s.from)} → {fmtShort(s.to)} · {MODS.find(m=>m.id===s.mod)?.label}</p>
             </div>
-            <span style={{fontSize:12,color:"#378add"}}>Tekrar ›</span>
+            <span style={{fontSize:"var(--gg-t2)",color:"#378add"}}>Tekrar ›</span>
           </div>
         );
       })}
@@ -631,7 +653,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
     const c=cityList.find(x=>x.id===s.cityId);
     if(!c) return;
     setCity(c); setFrom(s.from); setTo(s.to); setMod(s.mod);
-    setTimeout(()=>go({city:c,from:s.from,to:s.to,mod:s.mod}),0);
+    go({city:c,from:s.from,to:s.to,mod:s.mod});
   };
 
   if(planResult) return <ResultView {...planResult} onReset={()=>setPlanResult(null)}/>;
@@ -643,7 +665,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
       </PngBanner>
       <div style={{padding:"0 1.5rem 2rem",background:"var(--color-background-primary)"}}>
         <h2 style={{fontFamily:"Georgia,serif",fontWeight:400,fontSize:22,margin:"1.25rem 0 4px"}}>Tur Planla</h2>
-        <p style={{color:"var(--color-text-secondary)",fontSize:13,margin:"0 0 20px"}}>Kişi sayısı, tarih ve tercihlerini gir.</p>
+        <p style={{color:"var(--color-text-secondary)",fontSize:"var(--gg-t3)",margin:"0 0 20px"}}>Kişi sayısı, tarih ve tercihlerini gir.</p>
 
         <RecentSearches searches={searches} onSelect={loadSearch}/>
 
@@ -654,13 +676,13 @@ function PlanPage({onBack, planType="yurtdisi"}) {
         </div>
         {children>0&&(
           <div style={{marginBottom:20,padding:"12px 14px",background:"#f0f7ff",borderRadius:10,border:"0.5px solid #dbeeff"}}>
-            <p style={{margin:"0 0 10px",fontSize:12,color:"#185fa5",fontWeight:500}}>Çocuk yaşları</p>
+            <p style={{margin:"0 0 10px",fontSize:"var(--gg-t2)",color:"#185fa5",fontWeight:500}}>Çocuk yaşları</p>
             <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
               {childAges.map((age,i)=>(
                 <div key={i} style={{display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{i+1}. çocuk</span>
+                  <span style={{fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)"}}>{i+1}. çocuk</span>
                   <select value={age} onChange={e=>setChildAges(prev=>{const a=[...prev];a[i]=Number(e.target.value);return a;})}
-                    style={{padding:"6px 10px",border:"0.5px solid #b5d4f4",borderRadius:7,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:13}}>
+                    style={{padding:"6px 10px",border:"0.5px solid #b5d4f4",borderRadius:7,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t3)"}}>
                     {Array.from({length:18},(_,k)=>k).map(y=><option key={y} value={y}>{y===0?"Bebek (0)":y+" yaş"}</option>)}
                   </select>
                 </div>
@@ -681,9 +703,9 @@ function PlanPage({onBack, planType="yurtdisi"}) {
             const sel=mod===m.id;
             return(
               <div key={m.id} onClick={()=>setMod(m.id)} style={{border:`2px solid ${sel?"#378add":"var(--color-border-tertiary)"}`,borderRadius:10,padding:"12px 14px",cursor:"pointer",background:sel?"#e6f1fb":"var(--color-background-primary)",position:"relative"}}>
-                {sel&&<span style={{position:"absolute",top:9,right:11,fontSize:13,color:"#185fa5",fontWeight:700}}>✓</span>}
-                <p style={{margin:"0 0 3px",fontSize:14,fontWeight:500,color:sel?"#185fa5":"var(--color-text-primary)"}}>{m.icon} {m.label}</p>
-                <p style={{margin:0,fontSize:12,color:"var(--color-text-secondary)",lineHeight:1.4}}>{m.desc}</p>
+                {sel&&<span style={{position:"absolute",top:9,right:11,fontSize:"var(--gg-t3)",color:"#185fa5",fontWeight:700}}>✓</span>}
+                <p style={{margin:"0 0 3px",fontSize:"var(--gg-t3)",fontWeight:500,color:sel?"#185fa5":"var(--color-text-primary)"}}>{m.icon} {m.label}</p>
+                <p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)",lineHeight:1.4}}>{m.desc}</p>
               </div>
             );
           })}
@@ -695,27 +717,27 @@ function PlanPage({onBack, planType="yurtdisi"}) {
             const sel=city?.id===c.id;
             return(
               <div key={c.id} onClick={()=>setCity(c)} style={{border:`2px solid ${sel?"#378add":"var(--color-border-tertiary)"}`,borderRadius:8,padding:"10px 6px",cursor:"pointer",background:sel?"#e6f1fb":"var(--color-background-primary)",textAlign:"center",position:"relative"}}>
-                {sel&&<span style={{position:"absolute",top:4,right:6,fontSize:10,color:"#185fa5",fontWeight:700}}>✓</span>}
+                {sel&&<span style={{position:"absolute",top:4,right:6,fontSize:"var(--gg-t1)",color:"#185fa5",fontWeight:700}}>✓</span>}
                 <p style={{margin:"0 0 3px",fontSize:22,lineHeight:1.2}}>{c.flag}</p>
-                <p style={{margin:0,fontSize:11,color:sel?"#185fa5":"var(--color-text-primary)",fontWeight:sel?600:400}}>{c.name}</p>
+                <p style={{margin:0,fontSize:"var(--gg-t2)",color:sel?"#185fa5":"var(--color-text-primary)",fontWeight:sel?600:400}}>{c.name}</p>
               </div>
             );
           })}
         </div>
 
-        <SLabel>Özel İstek <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,fontSize:10,color:"var(--color-text-tertiary)"}}> — isteğe bağlı</span></SLabel>
+        <SLabel>Özel İstek <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,fontSize:"var(--gg-t1)",color:"var(--color-text-tertiary)"}}> — isteğe bağlı</span></SLabel>
         <div style={{position:"relative",marginBottom:22}}>
           <textarea value={note} onChange={e=>setNote(e.target.value.slice(0,150))}
             placeholder="ör: denize yakın otel, vejetaryen yemekler, müze ağırlıklı program..."
             rows={3}
-            style={{width:"100%",padding:"10px 12px",border:"0.5px solid var(--color-border-secondary)",borderRadius:8,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:13,lineHeight:1.55,resize:"none",boxSizing:"border-box",fontFamily:"inherit",display:"block"}}
+            style={{width:"100%",padding:"10px 12px",border:"0.5px solid var(--color-border-secondary)",borderRadius:8,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t3)",lineHeight:1.55,resize:"none",boxSizing:"border-box",fontFamily:"inherit",display:"block"}}
           />
-          <span style={{position:"absolute",bottom:8,right:10,fontSize:11,color:note.length>120?"#a32d2d":"var(--color-text-tertiary)",pointerEvents:"none"}}>{note.length}/150</span>
+          <span style={{position:"absolute",bottom:8,right:10,fontSize:"var(--gg-t2)",color:note.length>120?"#a32d2d":"var(--color-text-tertiary)",pointerEvents:"none"}}>{note.length}/150</span>
         </div>
 
-        {error&&<p style={{fontSize:13,color:"#a32d2d",margin:"0 0 14px",background:"#fcebeb",padding:"10px 14px",borderRadius:8,lineHeight:1.5}}>{error}</p>}
+        {error&&<p style={{fontSize:"var(--gg-t3)",color:"#a32d2d",margin:"0 0 14px",background:"#fcebeb",padding:"10px 14px",borderRadius:8,lineHeight:1.5}}>{error}</p>}
 
-        <button onClick={()=>go()} disabled={!canGo} style={{width:"100%",padding:"13px",border:`1.5px solid ${canGo?"#378add":"var(--color-border-tertiary)"}`,borderRadius:9,background:canGo?"#e6f1fb":"var(--color-background-secondary)",color:canGo?"#185fa5":"var(--color-text-tertiary)",cursor:canGo?"pointer":"not-allowed",fontSize:14,fontWeight:500}}>
+        <button onClick={()=>go()} disabled={!canGo} style={{width:"100%",padding:"13px",border:`1.5px solid ${canGo?"#378add":"var(--color-border-tertiary)"}`,borderRadius:9,background:canGo?"#e6f1fb":"var(--color-background-secondary)",color:canGo?"#185fa5":"var(--color-text-tertiary)",cursor:canGo?"pointer":"not-allowed",fontSize:"var(--gg-t3)",fontWeight:500}}>
           {loading
             ? <span style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 <span style={{width:14,height:14,border:"2px solid #b5d4f4",borderTopColor:"#185fa5",borderRadius:"50%",display:"inline-block",animation:"spin .8s linear infinite"}}/>
@@ -739,8 +761,8 @@ function Landing({onSelectCat,onPlan}) {
       </PngBanner>
       <div style={{padding:"1.5rem 1.5rem",background:"var(--color-background-primary)",borderRadius:"12px 12px 0 0",marginTop:-12,position:"relative",zIndex:1}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:24}}>
-          <button onClick={()=>onPlan("yurtici")} style={{padding:"14px 10px",border:"1.5px solid #0f6e56",borderRadius:10,background:"#e1f5ee",color:"#0f6e56",cursor:"pointer",fontSize:14,fontWeight:500}}>🇹🇷 Yurtiçi Gezi Planla</button>
-          <button onClick={()=>onPlan("yurtdisi")} style={{padding:"14px 10px",border:"1.5px solid #378add",borderRadius:10,background:"#e6f1fb",color:"#185fa5",cursor:"pointer",fontSize:14,fontWeight:500}}>✈️ Yurtdışı Gezi Planla</button>
+          <button onClick={()=>onPlan("yurtici")} style={{padding:"14px 10px",border:"1.5px solid #0f6e56",borderRadius:10,background:"#e1f5ee",color:"#0f6e56",cursor:"pointer",fontSize:"var(--gg-t3)",fontWeight:500}}>🇹🇷 Yurtiçi Gezi Planla</button>
+          <button onClick={()=>onPlan("yurtdisi")} style={{padding:"14px 10px",border:"1.5px solid #378add",borderRadius:10,background:"#e6f1fb",color:"#185fa5",cursor:"pointer",fontSize:"var(--gg-t3)",fontWeight:500}}>✈️ Yurtdışı Gezi Planla</button>
         </div>
         <div style={{borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:20}}>
           <SLabel>Hazır Tur Rehberleri</SLabel>
@@ -748,8 +770,8 @@ function Landing({onSelectCat,onPlan}) {
             {Object.entries(TOURS).map(([k,cat])=>(
               <div key={k} className="gg-card" onClick={()=>onSelectCat(cat)} style={{padding:"16px"}}>
                 <p style={{margin:"0 0 4px",fontSize:24}}>{cat.flag}</p>
-                <p style={{margin:"0 0 4px",fontSize:15,fontWeight:500}}>{cat.label}</p>
-                <p style={{margin:0,fontSize:12,color:"var(--color-text-secondary)"}}>{cat.tours.length} hazır tur</p>
+                <p style={{margin:"0 0 4px",fontSize:"var(--gg-t4)",fontWeight:500}}>{cat.label}</p>
+                <p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)"}}>{cat.tours.length} hazır tur</p>
               </div>
             ))}
           </div>
@@ -773,8 +795,8 @@ function CategoryPage({cat,onSelectTour,onBack}) {
             <div style={{display:"flex",alignItems:"flex-start",gap:14}}>
               <div style={{fontSize:32,lineHeight:1}}>{t.cover}</div>
               <div style={{flex:1}}>
-                <p style={{margin:"0 0 4px",fontSize:15,fontWeight:500}}>{t.title}</p>
-                <p style={{margin:"0 0 10px",fontSize:13,color:"var(--color-text-secondary)"}}>{t.subtitle}</p>
+                <p style={{margin:"0 0 4px",fontSize:"var(--gg-t4)",fontWeight:500}}>{t.title}</p>
+                <p style={{margin:"0 0 10px",fontSize:"var(--gg-t3)",color:"var(--color-text-secondary)"}}>{t.subtitle}</p>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap"}}><Tag>{t.duration}</Tag><Tag>{t.budget}</Tag>{t.tags.map(tg=><Tag key={tg}>{tg}</Tag>)}</div>
               </div>
               <span style={{color:"var(--color-text-tertiary)",fontSize:20,alignSelf:"center"}}>›</span>
@@ -792,22 +814,22 @@ function TourDetail({tour,onBack}) {
       <BgHeader><BackBtn onClick={onBack}/></BgHeader>
       <div style={{padding:"1.25rem 1.5rem",background:"var(--color-background-primary)"}}>
         <h2 style={{fontFamily:"Georgia,serif",fontWeight:400,fontSize:22,margin:"0 0 4px"}}>{tour.title}</h2>
-        <p style={{color:"var(--color-text-secondary)",fontSize:13,margin:"0 0 12px"}}>{tour.subtitle}</p>
+        <p style={{color:"var(--color-text-secondary)",fontSize:"var(--gg-t3)",margin:"0 0 12px"}}>{tour.subtitle}</p>
         <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:22}}><Tag>{tour.duration}</Tag><Tag>{tour.budget}</Tag>{tour.tags.map(t=><Tag key={t}>{t}</Tag>)}</div>
         {tour.days.map(d=>(
           <div key={d.day} style={{marginBottom:24}}>
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-              <div style={{width:28,height:28,borderRadius:"50%",background:"#e6f1fb",color:"#185fa5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600,flexShrink:0}}>{d.day}</div>
-              <p style={{margin:0,fontSize:15,fontWeight:500}}>{d.title}</p>
+              <div style={{width:28,height:28,borderRadius:"50%",background:"#e6f1fb",color:"#185fa5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"var(--gg-t3)",fontWeight:600,flexShrink:0}}>{d.day}</div>
+              <p style={{margin:0,fontSize:"var(--gg-t4)",fontWeight:500}}>{d.title}</p>
             </div>
             {d.slots.map((s,i)=>(
               <div key={i} style={{display:"flex",gap:12,marginBottom:14,paddingLeft:6}}>
                 <div style={{width:2,background:"var(--color-border-secondary)",borderRadius:2,flexShrink:0,marginTop:4}}/>
                 <div style={{flex:1}}>
-                  <p style={{margin:"0 0 2px",fontSize:11,color:"var(--color-text-tertiary)",fontWeight:600,letterSpacing:"0.05em"}}>{s.time.toUpperCase()}</p>
-                  <p style={{margin:"0 0 3px",fontSize:14,fontWeight:500}}>{s.place}</p>
-                  <p style={{margin:"0 0 6px",fontSize:13,color:"var(--color-text-secondary)",lineHeight:1.55}}>{s.desc}</p>
-                  {s.food&&<div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"4px 11px",borderRadius:20,background:"#faeeda",border:"0.5px solid #fac775"}}><span>🍽️</span><span style={{fontSize:12,color:"#854f0b",fontWeight:500}}>{s.food.name}</span>{s.food.note&&<span style={{fontSize:11,color:"#854f0b"}}> — {s.food.note}</span>}</div>}
+                  <p style={{margin:"0 0 2px",fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)",fontWeight:600,letterSpacing:"0.05em"}}>{s.time.toUpperCase()}</p>
+                  <p style={{margin:"0 0 3px",fontSize:"var(--gg-t3)",fontWeight:500}}>{s.place}</p>
+                  <p style={{margin:"0 0 6px",fontSize:"var(--gg-t3)",color:"var(--color-text-secondary)",lineHeight:1.55}}>{s.desc}</p>
+                  {s.food&&<div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"4px 11px",borderRadius:20,background:"#faeeda",border:"0.5px solid #fac775"}}><span>🍽️</span><span style={{fontSize:"var(--gg-t2)",color:"#854f0b",fontWeight:500}}>{s.food.name}</span>{s.food.note&&<span style={{fontSize:"var(--gg-t2)",color:"#854f0b"}}> — {s.food.note}</span>}</div>}
                 </div>
               </div>
             ))}
@@ -844,7 +866,7 @@ export default function Gezgez() {
   return(
     <>
       <style>{CSS}</style>
-      <div style={{maxWidth:960,margin:"40px auto",boxShadow:"0 4px 32px rgba(0,0,0,0.10)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:14,overflow:"hidden"}}>
+      <div className="gg-root" style={{maxWidth:960,margin:"40px auto",boxShadow:"0 4px 32px rgba(0,0,0,0.10)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:14,overflow:"hidden"}}>
         {page.view==="landing"  &&<Landing  onSelectCat={cat=>goTo({view:"category",cat})} onPlan={(type)=>goTo({view:"plan",planType:type})}/>}
         {page.view==="category" &&<CategoryPage cat={page.cat} onSelectTour={t=>goTo({view:"tour",tour:t,cat:page.cat})} onBack={()=>goTo({view:"landing"})}/>}
         {page.view==="tour"     &&<TourDetail tour={page.tour} onBack={()=>goTo({view:"category",cat:page.cat})}/>}
