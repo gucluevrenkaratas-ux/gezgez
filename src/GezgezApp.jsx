@@ -268,7 +268,7 @@ function TravelBg() {
   );
 }
 
-function PngBanner({src, height=200, children}) {
+function PngBanner({src, height=250, children}) {
   return(
     <div style={{position:"relative",height,overflow:"hidden"}}>
       <img src={src} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
@@ -638,7 +638,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
 
   return(
     <div>
-      <PngBanner src={isYurtici?"/banner-yurtici.png":"/banner-yurtdisi.png"} height={160}>
+      <PngBanner src={isYurtici?"/banner-yurtici.png":"/banner-yurtdisi.png"} height={250}>
         <div style={{padding:"1.25rem 1.75rem"}}><BackBtn onClick={onBack}/></div>
       </PngBanner>
       <div style={{padding:"0 1.5rem 2rem",background:"var(--color-background-primary)"}}>
@@ -732,11 +732,9 @@ function Landing({onSelectCat,onPlan}) {
 
   return(
     <div>
-      <PngBanner src="/banner-landing.png" height={200}>
+      <PngBanner src="/banner-landing.png" height={250}>
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",padding:"1rem"}}>
-          <div style={{fontSize:44,marginBottom:6,marginTop:40}}>🧭</div>
-          <h1 style={{fontFamily:"Georgia,serif",fontWeight:400,fontSize:28,margin:"0 0 6px",color:"#1a3a5c",textShadow:"0 1px 3px rgba(255,255,255,0.8)"}}>Gezgez</h1>
-          <p style={{color:"#2a5080",fontSize:14,margin:0,fontWeight:500,textShadow:"0 1px 2px rgba(255,255,255,0.7)"}}>Gezgez ile her yer cebinde.</p>
+       
         </div>
       </PngBanner>
       <div style={{padding:"1.5rem 1.5rem",background:"var(--color-background-primary)",borderRadius:"12px 12px 0 0",marginTop:-12,position:"relative",zIndex:1}}>
