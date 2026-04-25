@@ -222,19 +222,6 @@ const CSS = `
 
 function TravelBg() {
   return(
-    <svg viewBox="0 0 800 340" ...>
-      ...
-    </svg>
-  );
-}
-
-function PngBanner({src, height=200}) {
-  return(
-    <div style={{position:"relative",height,overflow:"hidden"}}>
-      <img src={src} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
-    </div>
-  );
-}
     <svg viewBox="0 0 800 340" xmlns="http://www.w3.org/2000/svg" style={{position:"absolute",inset:0,width:"100%",height:"100%",display:"block"}} preserveAspectRatio="xMidYMid slice">
       <defs>
         <linearGradient id="gg-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#87CEEB"/><stop offset="60%" stopColor="#B8E4F9"/><stop offset="100%" stopColor="#D4F1FF"/></linearGradient>
@@ -278,6 +265,15 @@ function PngBanner({src, height=200}) {
       <g><line x1="580" y1="265" x2="590" y2="310" stroke="#8B5E3C" strokeWidth="3"/><path d="M548,265 Q580,240 612,265 Z" fill="#E53935" opacity="0.9"/><path d="M548,265 Q564,252 580,265 Z" fill="#FFEB3B" opacity="0.9"/><path d="M580,265 Q596,252 612,265 Z" fill="#E53935" opacity="0.9"/></g>
       <rect width="800" height="340" fill="white" opacity="0.22"/>
     </svg>
+  );
+}
+
+function PngBanner({src, height=200, children}) {
+  return(
+    <div style={{position:"relative",height,overflow:"hidden"}}>
+      <img src={src} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+      {children&&<div style={{position:"relative",zIndex:1,height:"100%"}}>{children}</div>}
+    </div>
   );
 }
 
@@ -642,7 +638,9 @@ function PlanPage({onBack, planType="yurtdisi"}) {
 
   return(
     <div>
-     <PngBanner src={isYurtici?"/banner-yurtici.png":"/banner-yurtdisi.png"} height={160}/>
+      <PngBanner src={isYurtici?"/banner-yurtici.png":"/banner-yurtdisi.png"} height={160}>
+        <div style={{padding:"1.25rem 1.75rem"}}><BackBtn onClick={onBack}/></div>
+      </PngBanner>
       <div style={{padding:"0 1.5rem 2rem",background:"var(--color-background-primary)"}}>
         <h2 style={{fontFamily:"Georgia,serif",fontWeight:400,fontSize:22,margin:"1.25rem 0 4px"}}>Tur Planla</h2>
         <p style={{color:"var(--color-text-secondary)",fontSize:13,margin:"0 0 20px"}}>Kişi sayısı, tarih ve tercihlerini gir.</p>
@@ -734,13 +732,13 @@ function Landing({onSelectCat,onPlan}) {
 
   return(
     <div>
-      <PngBanner src="/banner-landing.png" height={200}/>
-        <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",padding:"1rem"}}>
+      <PngBanner src="/banner-landing.png" height={200}>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",padding:"1rem"}}>
           <div style={{fontSize:44,marginBottom:6,marginTop:40}}>🧭</div>
           <h1 style={{fontFamily:"Georgia,serif",fontWeight:400,fontSize:28,margin:"0 0 6px",color:"#1a3a5c",textShadow:"0 1px 3px rgba(255,255,255,0.8)"}}>Gezgez</h1>
           <p style={{color:"#2a5080",fontSize:14,margin:0,fontWeight:500,textShadow:"0 1px 2px rgba(255,255,255,0.7)"}}>Gezgez ile her yer cebinde.</p>
         </div>
-      </div>
+      </PngBanner>
       <div style={{padding:"1.5rem 1.5rem",background:"var(--color-background-primary)",borderRadius:"12px 12px 0 0",marginTop:-12,position:"relative",zIndex:1}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:24}}>
           <button onClick={()=>onPlan("yurtici")} style={{padding:"14px 10px",border:"1.5px solid #0f6e56",borderRadius:10,background:"#e1f5ee",color:"#0f6e56",cursor:"pointer",fontSize:14,fontWeight:500}}>🇹🇷 Yurtiçi Gezi Planla</button>
