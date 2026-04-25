@@ -638,7 +638,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
 
   return(
     <div>
-      <PngBanner src={isYurtici?"/banner-yurtici.png":"/banner-yurtdisi.png"} height={160}>
+      <PngBanner src={isYurtici?"/banner-yurtici.png":"/banner-yurtdisi.png"} height={250}>
         <div style={{padding:"1.25rem 1.75rem"}}><BackBtn onClick={onBack}/></div>
       </PngBanner>
       <div style={{padding:"0 1.5rem 2rem",background:"var(--color-background-primary)"}}>
