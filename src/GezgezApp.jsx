@@ -268,7 +268,7 @@ function TravelBg() {
   );
 }
 
-function PngBanner({src, height=200, children}) {
+function PngBanner({src, height=250, children}) {
   return(
     <div style={{position:"relative",height,overflow:"hidden"}}>
       <img src={src} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
