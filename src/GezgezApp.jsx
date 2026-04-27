@@ -211,7 +211,7 @@ const CSS = `
 }
 @media (max-width: 640px) {
   :root {
-    --gg-t1: 11px; --gg-t2: 13px; --gg-t3: 15px; --gg-t4: 17px; --gg-t5: 19px;
+    --gg-t1: 14px; --gg-t2: 17px; --gg-t3: 20px; --gg-t4: 23px; --gg-t5: 26px;
   }
   .gg-root {
     margin: 0 !important;
@@ -610,6 +610,16 @@ function PlanPage({onBack, planType="yurtdisi"}) {
   const [status,setStatus]=useState("");
   const [error,setError]=useState("");
   const [searches,setSearches]=useState([]);
+
+  useEffect(()=>{
+    // Mobil Chrome için viewport meta tag - yoksa ekle
+    if(!document.querySelector('meta[name="viewport"]')){
+      const m=document.createElement("meta");
+      m.name="viewport";
+      m.content="width=device-width, initial-scale=1, maximum-scale=1";
+      document.head.appendChild(m);
+    }
+  },[]);
 
   useEffect(()=>{
     (async()=>{
