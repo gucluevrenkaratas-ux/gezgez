@@ -22,7 +22,7 @@ async function storageGet(key) {
 async function storageSet(key, val) {
   try { if (!window.storage) return; await window.storage.set(key, val); } catch(e) {}
 }
-
+//
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 async function callGemini(prompt) {
