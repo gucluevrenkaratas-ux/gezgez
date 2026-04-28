@@ -719,15 +719,28 @@ function PlanPage({onBack, planType="yurtdisi"}) {
         )}
         {children===0&&<div style={{marginBottom:20}}/>}
 
-        <SLabel>Başlangıç Şehri</SLabel>
-        <div style={{marginBottom:20}}>
-          <select value={depCity} onChange={e=>setDepCity(e.target.value)}
-            style={{width:"100%",padding:"11px 14px",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t3)",fontFamily:"inherit",cursor:"pointer"}}>
-            {["Adana","Ankara","Antalya","Bursa","Diyarbakır","Erzurum","Eskişehir","Gaziantep","İstanbul","İzmir","Kayseri","Konya","Malatya","Nevşehir","Samsun","Trabzon","Şanlıurfa"].map(c=>(
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:0}}>
+          <div>
+            <SLabel>Başlangıç Şehri</SLabel>
+            <select value={depCity} onChange={e=>setDepCity(e.target.value)}
+              style={{width:"100%",padding:"11px 14px",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t3)",fontFamily:"inherit",cursor:"pointer"}}>
+              {["Adana","Ankara","Antalya","Bursa","Diyarbakır","Erzurum","Eskişehir","Gaziantep","İstanbul","İzmir","Kayseri","Konya","Malatya","Nevşehir","Samsun","Trabzon","Şanlıurfa"].map(c=>(
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <SLabel>Gezilecek Şehir</SLabel>
+            <select value={city?.id||""} onChange={e=>{const c=cityList.find(x=>x.id===e.target.value);if(c)setCity(c);}}
+              style={{width:"100%",padding:"11px 14px",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t3)",fontFamily:"inherit",cursor:"pointer"}}>
+              <option value="">— Seç —</option>
+              {cityList.map(c=>(
+                <option key={c.id} value={c.id}>{c.flag} {c.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
+        <div style={{marginBottom:20,marginTop:16,height:1,background:"linear-gradient(to right,transparent,#b5d4f4 20%,#b5d4f4 80%,transparent)",boxShadow:"0 2px 8px rgba(55,138,221,0.10)"}}/>
 
         <SLabel>Tarih</SLabel>
         <div style={{marginBottom:4}}>
@@ -751,7 +764,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
           })}
         </div>
 
-        <SLabel>Destinasyon</SLabel>
+        <SLabel>Hızlı Gezi Şehirleri</SLabel>
         <div className="city-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20}}>
           {cityList.map(c=>{
             const sel=city?.id===c.id;
