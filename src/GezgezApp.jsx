@@ -211,7 +211,7 @@ const CSS = `
 }
 @media (max-width: 768px) {
   :root {
-    --gg-t1: 14px; --gg-t2: 17px; --gg-t3: 20px; --gg-t4: 23px; --gg-t5: 26px;
+    --gg-t1: 11px; --gg-t2: 13px; --gg-t3: 15px; --gg-t4: 17px; --gg-t5: 20px;
   }
   .gg-root {
     margin: 0 !important;
@@ -221,6 +221,8 @@ const CSS = `
   }
   .cal-day { width: 36px !important; height: 36px !important; }
   .cal-grid { grid-template-columns: repeat(7, 36px) !important; }
+  .mod-grid { grid-template-columns: 1fr !important; }
+  .city-grid { grid-template-columns: repeat(3, 1fr) !important; }
 }
 @keyframes sway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -708,7 +710,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
         </div>
 
         <SLabel>Seyahat Tarzı</SLabel>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
+        <div className="mod-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
           {MODS.map(m=>{
             const sel=mod===m.id;
             return(
@@ -722,7 +724,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
         </div>
 
         <SLabel>Destinasyon</SLabel>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20}}>
+        <div className="city-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20}}>
           {cityList.map(c=>{
             const sel=city?.id===c.id;
             return(
