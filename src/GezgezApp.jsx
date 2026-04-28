@@ -722,7 +722,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
         <SLabel>Başlangıç Şehri</SLabel>
         <div style={{marginBottom:20}}>
           <select value={depCity} onChange={e=>setDepCity(e.target.value)}
-            style={{width:"100%",padding:"11px 14px",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t3)",fontFamily:"inherit",appearance:"none",backgroundImage:"url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23378add' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")",backgroundRepeat:"no-repeat",backgroundPosition:"right 14px center",cursor:"pointer"}}>
+            style={{width:"100%",padding:"11px 14px",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t3)",fontFamily:"inherit",cursor:"pointer"}}>
             {["Adana","Ankara","Antalya","Bursa","Diyarbakır","Erzurum","Eskişehir","Gaziantep","İstanbul","İzmir","Kayseri","Konya","Malatya","Nevşehir","Samsun","Trabzon","Şanlıurfa"].map(c=>(
               <option key={c} value={c}>{c}</option>
             ))}
