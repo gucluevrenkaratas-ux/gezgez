@@ -63,11 +63,11 @@ async function askGemini(prompt) {
   catch(e) { throw e; }
 }
 
-function buildPrompt(city, from, to, mod, adults, children, childAges, note, isYurtici=false) {
+function buildPrompt(city, from, to, mod, adults, children, childAges, note, isYurtici=false, depCity="İstanbul") {
   const nights = Math.max(1, Math.ceil((fromKey(to) - fromKey(from)) / 86400000));
   const kisi = `${adults} yetişkin${children > 0 ? `, ${children} çocuk (${childAges.map(a => a===0?"bebek":a+"y").join(",")})` : ""}`;
   const ekIstek = note.trim() ? ` ${note.trim()}` : "";
-  const guzergah = isYurtici ? `Ankara-${city.name}` : `Ankara-${city.name}`;
+  const guzergah = `${depCity}-${city.name}`;
   const ucusField = isYurtici
     ? `"ulasim":{"info":"otobüs/uçak seçeneği ve TL fiyat","tip":"tavsiye"},`
     : `"flight":{"info":"havayolu ve TL fiyat","tip":"tavsiye"},`;
@@ -618,6 +618,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
   const [to,setTo]=useState("");
   const [mod,setMod]=useState("aile");
   const [adults,setAdults]=useState(2);
+  const [depCity,setDepCity]=useState("İstanbul");
   const [children,setChildren]=useState(0);
   const [childAges,setChildAges]=useState([]);
   const [note,setNote]=useState("");
@@ -666,7 +667,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
     if(!_city||!_from||!_to) return;
     setLoading(true); setError(""); setPlanResult(null); setStatus("🌍 Rota hazırlanıyor...");
     try{
-      const plan=await askGemini(buildPrompt(_city,_from,_to,_modLabel,adults,children,childAges,note,isYurtici));
+      const plan=await askGemini(buildPrompt(_city,_from,_to,_modLabel,adults,children,childAges,note,isYurtici,depCity));
       setPlanResult({plan,city:_city,from:_from,to:_to,mod:_mod});
       await saveSearch({cityId:_city.id,from:_from,to:_to,mod:_mod});
     }catch(err){
@@ -717,6 +718,16 @@ function PlanPage({onBack, planType="yurtdisi"}) {
           </div>
         )}
         {children===0&&<div style={{marginBottom:20}}/>}
+
+        <SLabel>Başlangıç Şehri</SLabel>
+        <div style={{marginBottom:20}}>
+          <select value={depCity} onChange={e=>setDepCity(e.target.value)}
+            style={{width:"100%",padding:"11px 14px",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t3)",fontFamily:"inherit",appearance:"none",backgroundImage:"url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23378add' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")",backgroundRepeat:"no-repeat",backgroundPosition:"right 14px center",cursor:"pointer"}}>
+            {["Adana","Ankara","Antalya","Bursa","Diyarbakır","Erzurum","Eskişehir","Gaziantep","İstanbul","İzmir","Kayseri","Konya","Malatya","Nevşehir","Samsun","Trabzon","Şanlıurfa"].map(c=>(
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
 
         <SLabel>Tarih</SLabel>
         <div style={{marginBottom:4}}>
