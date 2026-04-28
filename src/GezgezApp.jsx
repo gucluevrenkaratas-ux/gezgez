@@ -144,12 +144,15 @@ const CITIES_TR = [
   {id:"balikesir", name:"Balıkesir",  flag:"🫒",sky:"BZI",booking:"balikesir"},
 ];
 
-const MODS = [
+const MODS_KONAKLAMALI = [
   {id:"aile",       icon:"👨‍👩‍👧",label:"Aile",        desc:"Çocuk dostu, güvenli, erken programlar"},
-  {id:"macera",     icon:"🧗",   label:"Macera",      desc:"Doğa, su sporları, keşif"},
   {id:"butce",      icon:"💸",   label:"Bütçe Dostu", desc:"Ekonomik konaklama, ücretsiz müzeler"},
+];
+const MODS_GUNLUK = [
+  {id:"macera",     icon:"🧗",   label:"Macera",      desc:"Doğa, su sporları, keşif"},
   {id:"local_foodie",icon:"🍲",  label:"Yerel Gurme", desc:"Turist tuzaklarından uzak, gerçek yerel lezzetler"},
 ];
+const MODS = [...MODS_KONAKLAMALI, ...MODS_GUNLUK];
 
 const TAG_COLORS = {
   "Sahil":     {bg:"#e6f1fb",color:"#185fa5",border:"#b5d4f4"},
@@ -328,9 +331,9 @@ function DateRangePicker({from,to,onChange}) {
   const prevM=()=>{if(vm===0){setVy(y=>y-1);setVm(11);}else setVm(m=>m-1);};
   const nextM=()=>{if(vm===11){setVy(y=>y+1);setVm(0);}else setVm(m=>m+1);};
   const handleClick=(d)=>{
-    if(step==="start"||step==="done"){ onChange(toKey(d),""); setStep("end"); }
+    if(step==="start"||step==="done"){ onChange(toKey(d),toKey(d)); setStep("done"); }
     else {
-      if(startD&&d<startD) return; // end seçiminde gidiş tarihinden önce seçime izin verme
+      if(startD&&d<startD) return;
       onChange(from,toKey(d)); setStep("done");
     }
   };
@@ -354,18 +357,14 @@ function DateRangePicker({from,to,onChange}) {
   return(
     <div style={{background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,overflow:"hidden"}}>
       <div style={{display:"flex",background:"#e6f1fb",borderBottom:"0.5px solid #b5d4f4"}}>
-        <div onClick={()=>setStep("start")} style={{flex:1,padding:"7px 10px",cursor:"pointer",borderRight:"0.5px solid #b5d4f4",background:step==="start"?"#c8dff7":"transparent"}}>
-          <p style={{margin:"0 0 1px",fontSize:"var(--gg-t1)",color:"#185fa5",textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>Gidiş</p>
-          <p style={{margin:0,fontSize:"var(--gg-t3)",fontWeight:500,color:"#1a3a5c"}}>{from?fmtShort(from):"Seç"}</p>
-        </div>
-        <div onClick={()=>from&&setStep("end")} style={{flex:1,padding:"7px 10px",cursor:from?"pointer":"default",background:step==="end"?"#c8dff7":"transparent"}}>
-          <p style={{margin:"0 0 1px",fontSize:"var(--gg-t1)",color:"#185fa5",textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>Dönüş</p>
-          <p style={{margin:0,fontSize:"var(--gg-t3)",fontWeight:500,color:"#1a3a5c"}}>{to?fmtShort(to):"Seç"}</p>
+        <div onClick={()=>setStep("start")} style={{flex:1,padding:"7px 10px",cursor:"pointer",background:step==="start"?"#c8dff7":"transparent"}}>
+          <p style={{margin:"0 0 1px",fontSize:"var(--gg-t1)",color:"#185fa5",textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:600}}>Tarih</p>
+          <p style={{margin:0,fontSize:"var(--gg-t3)",fontWeight:500,color:"#1a3a5c"}}>{from?fmtShort(from):"Seç"}{from&&to&&from!==to?<span style={{color:"#378add"}}> → {fmtShort(to)}</span>:null}</p>
         </div>
         {nights>0&&<div style={{padding:"7px 10px",display:"flex",alignItems:"center"}}><span style={{fontSize:"var(--gg-t2)",color:"#185fa5",fontWeight:500,whiteSpace:"nowrap"}}>{nights} gece</span></div>}
       </div>
       <div style={{padding:"3px 10px",background:"#f0f7ff",borderBottom:"0.5px solid #dbeeff"}}>
-        <p style={{margin:0,fontSize:"var(--gg-t1)",color:"#378add"}}>{step==="start"?"Gidiş tarihine tıkla":step==="end"?"Dönüş tarihine tıkla":"✓ Tarih seçildi"}</p>
+        <p style={{margin:0,fontSize:"var(--gg-t1)",color:"#378add"}}>{step==="start"?"Tarihe tıkla — tek gün veya aralık seç":step==="end"?"Dönüş tarihi seç (opsiyonel)":"✓ Tarih seçildi — dönüş için tekrar tıkla"}</p>
       </div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 10px"}}>
         <button onClick={prevM} style={{background:"#e6f1fb",border:"1.5px solid #378add",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:"var(--gg-t4)",fontWeight:700,color:"#185fa5",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
@@ -750,9 +749,22 @@ function PlanPage({onBack, planType="yurtdisi"}) {
           💡 Aramalarınızı <strong>max. 3–4 gün</strong> olarak yaparsanız daha detaylı ve sağlıklı bilgi alabilirsiniz.
         </p>
 
-        <SLabel>Seyahat Tarzı</SLabel>
+        <SLabel>Seyahat Tarzı <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)"}}>(Konaklamalı)</span></SLabel>
+        <div className="mod-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+          {MODS_KONAKLAMALI.map(m=>{
+            const sel=mod===m.id;
+            return(
+              <div key={m.id} onClick={()=>setMod(m.id)} style={{border:`2px solid ${sel?"#378add":"var(--color-border-tertiary)"}`,borderRadius:10,padding:"12px 14px",cursor:"pointer",background:sel?"#e6f1fb":"var(--color-background-primary)",position:"relative"}}>
+                {sel&&<span style={{position:"absolute",top:9,right:11,fontSize:"var(--gg-t3)",color:"#185fa5",fontWeight:700}}>✓</span>}
+                <p style={{margin:"0 0 3px",fontSize:"var(--gg-t3)",fontWeight:500,color:sel?"#185fa5":"var(--color-text-primary)"}}>{m.icon} {m.label}</p>
+                <p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)",lineHeight:1.4}}>{m.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+        <SLabel>Günlük Gezi <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)"}}>(Tadım, Şehir Turu)</span></SLabel>
         <div className="mod-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
-          {MODS.map(m=>{
+          {MODS_GUNLUK.map(m=>{
             const sel=mod===m.id;
             return(
               <div key={m.id} onClick={()=>setMod(m.id)} style={{border:`2px solid ${sel?"#378add":"var(--color-border-tertiary)"}`,borderRadius:10,padding:"12px 14px",cursor:"pointer",background:sel?"#e6f1fb":"var(--color-background-primary)",position:"relative"}}>
