@@ -22,7 +22,7 @@ async function storageGet(key) {
 async function storageSet(key, val) {
   try { if (!window.storage) return; await window.storage.set(key, val); } catch(e) {}
 }
-//
+
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 async function callGemini(prompt) {
@@ -209,7 +209,7 @@ const CSS = `
 :root {
   --gg-t1: 9px; --gg-t2: 11px; --gg-t3: 13px; --gg-t4: 15px; --gg-t5: 17px;
 }
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   :root {
     --gg-t1: 14px; --gg-t2: 17px; --gg-t3: 20px; --gg-t4: 23px; --gg-t5: 26px;
   }
