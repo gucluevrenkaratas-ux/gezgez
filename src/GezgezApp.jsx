@@ -226,6 +226,21 @@ const CSS = `
 }
 @keyframes sway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes ggFloat{
+  0%{transform:translateY(0) scale(1);opacity:0}
+  10%{opacity:0.18}
+  80%{opacity:0.13}
+  100%{transform:translateY(-110vh) scale(1.15);opacity:0}
+}
+@keyframes ggPulse{
+  0%,100%{background-color:#f0f7ff}
+  50%{background-color:#e0efff}
+}
+body{animation:ggPulse 8s ease-in-out infinite;}
+@media(max-width:768px){
+  .gg-bg{display:none!important;}
+  body{animation:none!important;}
+}
 .gg-card{border:0.5px solid var(--color-border-tertiary);border-radius:12px;cursor:pointer;background:var(--color-background-primary);transition:transform .15s,box-shadow .15s}
 .gg-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,80,160,0.1)}
 .cal-day{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:var(--gg-t2);cursor:pointer;user-select:none}
@@ -875,9 +890,29 @@ export default function Gezgez() {
     setPage(newPage);
   };
 
+  const FLOAT_EMOJIS = ["✈️","🌍","🧳","🗺️","🌅","⛵","🏔️","🌴","🧭","🌏"];
+  const floaters = useMemo(()=>FLOAT_EMOJIS.map((_,i)=>({
+    emoji: FLOAT_EMOJIS[i],
+    left: `${8 + (i*9) % 84}%`,
+    delay: `${(i*1.7) % 12}s`,
+    duration: `${14 + (i*2.3) % 10}s`,
+    size: `${18 + (i*3) % 14}px`,
+  })),[]);
+
   return(
     <>
       <style>{CSS}</style>
+      <div style={{position:"fixed",inset:0,zIndex:-1,overflow:"hidden",pointerEvents:"none"}} className="gg-bg">
+        {floaters.map((f,i)=>(
+          <span key={i} className="gg-float" style={{
+            position:"absolute", bottom:"-40px", left:f.left,
+            fontSize:f.size, opacity:0,
+            animationName:"ggFloat", animationDuration:f.duration,
+            animationDelay:f.delay, animationIterationCount:"infinite",
+            animationTimingFunction:"ease-in-out",
+          }}>{f.emoji}</span>
+        ))}
+      </div>
       <div className="gg-root" style={{maxWidth:960,margin:"40px auto",boxShadow:"0 4px 32px rgba(0,0,0,0.10)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:14,overflow:"hidden"}}>
         {page.view==="landing"  &&<Landing  onSelectCat={cat=>goTo({view:"category",cat})} onPlan={(type)=>goTo({view:"plan",planType:type})}/>}
         {page.view==="category" &&<CategoryPage cat={page.cat} onSelectTour={t=>goTo({view:"tour",tour:t,cat:page.cat})} onBack={()=>goTo({view:"landing"})}/>}
