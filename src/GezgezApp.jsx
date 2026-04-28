@@ -37,7 +37,7 @@ ${prompt}`;
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
-      generationConfig: { responseMimeType: "application/json" }
+      generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192 }
     })
   });
   if (!r.ok) {
@@ -88,7 +88,7 @@ ${ucusField}
 "budget":{"${isYurtici?"ulasim":"flight"}":"TL","hotel":"TL","food":"TL","activities":"TL","total_per_person":"TL","total_group":"TL"},
 "tips":["tavsiye 1","tavsiye 2"]
 }
-days dizisinde ${nights} gün olsun. Her alan kesinlikle max 30 karakter. Kısa ve öz yaz. Uzun cümle kullanma.
+days dizisinde ${nights} gün olsun. Kısa ve öz yaz, gereksiz uzatma.
 Eğer mod "Yerel Gurme" ise; popüler ve turistik restoranlar yerine yerel halkın müdavimi olduğu esnaf lokantaları, tabelasız aile işletmeleri, geleneksel yöntemlerle (fermentasyon, artisan üretim, tandır, taş fırın) üretim yapan noktaları öner. Hikayesi olan yemekleri, sadece belirli saatlerde çıkan sokak lezzetlerini ve yerel içecekleri (şalgam, boza, ayran, geleneksel şuruplar) ön plana çıkar. TripAdvisor listelerinden uzak dur.
 Bütçe tahminlerinde güncel Türkiye enflasyonunu, TL/EUR ve TL/USD kurunu ve yüksek sezonu (Haziran-Ağustos) dikkate al. Fiyatları her zaman üst sınırdan (kötümser/pessimistic) hesapla, kullanıcı sürprizle karşılaşmasın. Otel fiyatlarında "Booking.com'da şu an görünen orta-üst segment fiyat" gibi düşün.`;
 }
@@ -146,7 +146,6 @@ const CITIES_TR = [
 
 const MODS = [
   {id:"aile",       icon:"👨‍👩‍👧",label:"Aile",        desc:"Çocuk dostu, güvenli, erken programlar"},
-  {id:"gurme",      icon:"🍽️",   label:"Gurme",       desc:"Pazar turları, yerel lezzetler"},
   {id:"macera",     icon:"🧗",   label:"Macera",      desc:"Doğa, su sporları, keşif"},
   {id:"butce",      icon:"💸",   label:"Bütçe Dostu", desc:"Ekonomik konaklama, ücretsiz müzeler"},
   {id:"local_foodie",icon:"🍲",  label:"Yerel Gurme", desc:"Turist tuzaklarından uzak, gerçek yerel lezzetler"},
@@ -720,9 +719,12 @@ function PlanPage({onBack, planType="yurtdisi"}) {
         {children===0&&<div style={{marginBottom:20}}/>}
 
         <SLabel>Tarih</SLabel>
-        <div style={{marginBottom:20}}>
+        <div style={{marginBottom:4}}>
           <DateRangePicker from={from} to={to} onChange={(f,t)=>{setFrom(f);setTo(t);}}/>
         </div>
+        <p style={{margin:"0 0 18px",fontSize:"var(--gg-t2)",color:"#185fa5",background:"#e6f1fb",border:"1px solid #b5d4f4",borderRadius:8,padding:"8px 12px",lineHeight:1.5}}>
+          💡 Aramalarınızı <strong>max. 3–4 gün</strong> olarak yaparsanız daha detaylı ve sağlıklı bilgi alabilirsiniz.
+        </p>
 
         <SLabel>Seyahat Tarzı</SLabel>
         <div className="mod-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
