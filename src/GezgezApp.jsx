@@ -90,6 +90,8 @@ ${ucusField}
 }
 days dizisinde ${nights} gün olsun. Kısa ve öz yaz, gereksiz uzatma.
 Eğer mod "Yerel Gurme" ise; popüler ve turistik restoranlar yerine yerel halkın müdavimi olduğu esnaf lokantaları, tabelasız aile işletmeleri, geleneksel yöntemlerle (fermentasyon, artisan üretim, tandır, taş fırın) üretim yapan noktaları öner. Hikayesi olan yemekleri, sadece belirli saatlerde çıkan sokak lezzetlerini ve yerel içecekleri (şalgam, boza, ayran, geleneksel şuruplar) ön plana çıkar. TripAdvisor listelerinden uzak dur.
+Eğer mod "Macera" ise; şehrin doğal parkları, tırmanış noktaları, su sporları, bisiklet rotaları gibi aktif aktiviteleri planla. Her slot için fiziksel zorluk seviyesi (kolay/orta/zor) ve gereken ekipmanı belirt.
+Eğer mod "Macera" veya "Yerel Gurme" ise (günlük gezi): hotels alanına boş dizi [] ver, budget.hotel alanını "konaklama yok (günübirlik)" yaz. days dizisinde sabahtan geceye saatlik detaylı program yap, her slotta "tasima":"nasıl gidilir" ve "sure":"kaç dk/saat" alanları ekle. Slots içinde en az 5 slot olsun.
 Bütçe tahminlerinde güncel Türkiye enflasyonunu, TL/EUR ve TL/USD kurunu ve yüksek sezonu (Haziran-Ağustos) dikkate al. Fiyatları her zaman üst sınırdan (kötümser/pessimistic) hesapla, kullanıcı sürprizle karşılaşmasın. Otel fiyatlarında "Booking.com'da şu an görünen orta-üst segment fiyat" gibi düşün.`;
 }
 
@@ -313,7 +315,7 @@ function PngBanner({src, height=250, children}) {
   );
 }
 
-function DateRangePicker({from,to,onChange}) {
+function DateRangePicker({from,to,onChange,isGunluk=false}) {
   const today = useMemo(()=>{ const d=new Date(); d.setHours(0,0,0,0); return d; },[]);
   const [vy,setVy] = useState(today.getFullYear());
   const [vm,setVm] = useState(today.getMonth());
@@ -331,9 +333,11 @@ function DateRangePicker({from,to,onChange}) {
   const prevM=()=>{if(vm===0){setVy(y=>y-1);setVm(11);}else setVm(m=>m-1);};
   const nextM=()=>{if(vm===11){setVy(y=>y+1);setVm(0);}else setVm(m=>m+1);};
   const handleClick=(d)=>{
-    if(step==="start"||step==="done"){ onChange(toKey(d),""); setStep("end"); }
-    else {
-      if(startD&&sameDay(d,startD)){ onChange(from,toKey(d)); setStep("done"); } // tek gün
+    if(step==="start"||step==="done"){
+      if(isGunluk){ onChange(toKey(d),toKey(d)); setStep("done"); } // günlük: tek tıkla tamamla
+      else { onChange(toKey(d),""); setStep("end"); }
+    } else {
+      if(startD&&sameDay(d,startD)){ onChange(from,toKey(d)); setStep("done"); }
       else if(startD&&d<startD) return;
       else { onChange(from,toKey(d)); setStep("done"); }
     }
@@ -365,7 +369,7 @@ function DateRangePicker({from,to,onChange}) {
         {nights>0&&<div style={{padding:"7px 10px",display:"flex",alignItems:"center"}}><span style={{fontSize:"var(--gg-t2)",color:"#185fa5",fontWeight:500,whiteSpace:"nowrap"}}>{nights} gece</span></div>}
       </div>
       <div style={{padding:"3px 10px",background:"#f0f7ff",borderBottom:"0.5px solid #dbeeff"}}>
-        <p style={{margin:0,fontSize:"var(--gg-t1)",color:"#378add"}}>{step==="start"?"Tarihe tıkla — tek gün veya aralık seç":step==="end"?"Dönüş tarihi seç (opsiyonel)":"✓ Tarih seçildi — dönüş için tekrar tıkla"}</p>
+        <p style={{margin:0,fontSize:"var(--gg-t1)",color:"#378add"}}>{isGunluk?(step==="done"?"✓ Gün seçildi":"Gezi gününü seç"):(step==="start"?"Gidiş tarihine tıkla":step==="end"?"Dönüş tarihine tıkla":"✓ Tarih seçildi")}</p>
       </div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 10px"}}>
         <button onClick={prevM} style={{background:"#e6f1fb",border:"1.5px solid #378add",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:"var(--gg-t4)",fontWeight:700,color:"#185fa5",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
@@ -744,25 +748,12 @@ function PlanPage({onBack, planType="yurtdisi"}) {
 
         <SLabel>Tarih</SLabel>
         <div style={{marginBottom:4}}>
-          <DateRangePicker from={from} to={to} onChange={(f,t)=>{setFrom(f);setTo(t);}}/>
+          <DateRangePicker from={from} to={to} onChange={(f,t)=>{setFrom(f);setTo(t);}} isGunluk={MODS_GUNLUK.some(m=>m.id===mod)}/>
         </div>
         <p style={{margin:"0 0 18px",fontSize:"var(--gg-t2)",color:"#185fa5",background:"#e6f1fb",border:"1px solid #b5d4f4",borderRadius:8,padding:"8px 12px",lineHeight:1.5}}>
           💡 Aramalarınızı <strong>max. 3–4 gün</strong> olarak yaparsanız daha detaylı ve sağlıklı bilgi alabilirsiniz.
         </p>
 
-        <SLabel>Seyahat Tarzı <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)"}}>(Konaklamalı)</span></SLabel>
-        <div className="mod-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-          {MODS_KONAKLAMALI.map(m=>{
-            const sel=mod===m.id;
-            return(
-              <div key={m.id} onClick={()=>setMod(m.id)} style={{border:`2px solid ${sel?"#378add":"var(--color-border-tertiary)"}`,borderRadius:10,padding:"12px 14px",cursor:"pointer",background:sel?"#e6f1fb":"var(--color-background-primary)",position:"relative"}}>
-                {sel&&<span style={{position:"absolute",top:9,right:11,fontSize:"var(--gg-t3)",color:"#185fa5",fontWeight:700}}>✓</span>}
-                <p style={{margin:"0 0 3px",fontSize:"var(--gg-t3)",fontWeight:500,color:sel?"#185fa5":"var(--color-text-primary)"}}>{m.icon} {m.label}</p>
-                <p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)",lineHeight:1.4}}>{m.desc}</p>
-              </div>
-            );
-          })}
-        </div>
         <SLabel>Günlük Gezi <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)"}}>(Tadım, Şehir Turu)</span></SLabel>
         <div className="mod-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
           {MODS_GUNLUK.map(m=>{
@@ -777,6 +768,19 @@ function PlanPage({onBack, planType="yurtdisi"}) {
           })}
         </div>
 
+        <SLabel>Seyahat Tarzı <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)"}}>(Konaklamalı)</span></SLabel>
+        <div className="mod-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+          {MODS_KONAKLAMALI.map(m=>{
+            const sel=mod===m.id;
+            return(
+              <div key={m.id} onClick={()=>setMod(m.id)} style={{border:`2px solid ${sel?"#378add":"var(--color-border-tertiary)"}`,borderRadius:10,padding:"12px 14px",cursor:"pointer",background:sel?"#e6f1fb":"var(--color-background-primary)",position:"relative"}}>
+                {sel&&<span style={{position:"absolute",top:9,right:11,fontSize:"var(--gg-t3)",color:"#185fa5",fontWeight:700}}>✓</span>}
+                <p style={{margin:"0 0 3px",fontSize:"var(--gg-t3)",fontWeight:500,color:sel?"#185fa5":"var(--color-text-primary)"}}>{m.icon} {m.label}</p>
+                <p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)",lineHeight:1.4}}>{m.desc}</p>
+              </div>
+            );
+          })}
+        </div>
         <SLabel>Hızlı Gezi Şehirleri</SLabel>
         <div className="city-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20}}>
           {cityList.map(c=>{
