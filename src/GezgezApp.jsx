@@ -331,10 +331,11 @@ function DateRangePicker({from,to,onChange}) {
   const prevM=()=>{if(vm===0){setVy(y=>y-1);setVm(11);}else setVm(m=>m-1);};
   const nextM=()=>{if(vm===11){setVy(y=>y+1);setVm(0);}else setVm(m=>m+1);};
   const handleClick=(d)=>{
-    if(step==="start"||step==="done"){ onChange(toKey(d),toKey(d)); setStep("done"); }
+    if(step==="start"||step==="done"){ onChange(toKey(d),""); setStep("end"); }
     else {
-      if(startD&&d<startD) return;
-      onChange(from,toKey(d)); setStep("done");
+      if(startD&&sameDay(d,startD)){ onChange(from,toKey(d)); setStep("done"); } // tek gün
+      else if(startD&&d<startD) return;
+      else { onChange(from,toKey(d)); setStep("done"); }
     }
   };
   const getCls=(cell)=>{
