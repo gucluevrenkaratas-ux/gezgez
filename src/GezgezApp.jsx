@@ -207,7 +207,12 @@ const CITIES_TR_GUNLUK = TR_PROVINCES.map((name) => {
 function TurkeyMapPicker({ cityList, city, onSelect }) {
   const [svgMarkup, setSvgMarkup] = useState("");
   const [mapError, setMapError] = useState("");
+  const [hoverName, setHoverName] = useState("");
+  const [zoom, setZoom] = useState(1.2);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
   const mapRef = useRef(null);
+  const dragRef = useRef({ startX: 0, startY: 0, panX: 0, panY: 0 });
 
   const cityByName = useMemo(() => {
     const m = new Map();
@@ -261,18 +266,76 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
     if (selected) onSelect(selected);
   };
 
+  const onMapMouseMove = (e) => {
+    const target = e.target.closest("[data-city-name], path[id]");
+    if (!target) {
+      setHoverName("");
+      return;
+    }
+    const cityName = target.getAttribute("data-city-name") || target.getAttribute("id") || "";
+    const selected = cityByName.get(normalizeTr(cityName));
+    setHoverName(selected?.name || cityName);
+  };
+
+  const zoomIn = () => setZoom((z) => Math.min(2.4, +(z + 0.15).toFixed(2)));
+  const zoomOut = () => setZoom((z) => Math.max(0.8, +(z - 0.15).toFixed(2)));
+  const resetView = () => { setZoom(1.2); setPan({ x: 0, y: 0 }); };
+
+  const startDrag = (e) => {
+    setDragging(true);
+    dragRef.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y };
+  };
+  const moveDrag = (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    setPan({ x: dragRef.current.panX + dx, y: dragRef.current.panY + dy });
+  };
+  const endDrag = () => setDragging(false);
+
   return (
     <div style={{marginBottom:14,padding:"10px",border:"0.5px solid #b5d4f4",borderRadius:10,background:"#f7fbff"}}>
-      <p style={{margin:"0 0 8px",fontSize:"var(--gg-t2)",color:"#185fa5",fontWeight:600}}>🗺️ Türkiye haritasından seç</p>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:8}}>
+        <p style={{margin:0,fontSize:"var(--gg-t2)",color:"#185fa5",fontWeight:600}}>🗺️ Türkiye haritasından seç</p>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <button onClick={zoomOut} style={{padding:"2px 8px",border:"0.5px solid #b5d4f4",borderRadius:999,background:"#e6f1fb",color:"#185fa5",fontSize:"var(--gg-t2)",cursor:"pointer"}}>−</button>
+          <span style={{fontSize:"var(--gg-t1)",color:"#3a6090",minWidth:38,textAlign:"center"}}>{Math.round(zoom*100)}%</span>
+          <button onClick={zoomIn} style={{padding:"2px 8px",border:"0.5px solid #b5d4f4",borderRadius:999,background:"#e6f1fb",color:"#185fa5",fontSize:"var(--gg-t2)",cursor:"pointer"}}>+</button>
+          <button onClick={resetView} style={{padding:"2px 8px",border:"0.5px solid #c9ddf5",borderRadius:999,background:"#fff",color:"#3a6090",fontSize:"var(--gg-t1)",cursor:"pointer"}}>Sıfırla</button>
+        </div>
+      </div>
       {mapError && <p style={{margin:"0 0 8px",fontSize:"var(--gg-t2)",color:"#a32d2d"}}>{mapError}</p>}
       {!svgMarkup && !mapError && <p style={{margin:0,fontSize:"var(--gg-t2)",color:"#185fa5"}}>Harita yükleniyor...</p>}
       {svgMarkup && (
-        <div
-          ref={mapRef}
-          onClick={onMapClick}
-          style={{width:"100%",maxHeight:340,overflow:"auto",background:"#eef6ff",borderRadius:8,padding:6}}
-          dangerouslySetInnerHTML={{ __html: svgMarkup }}
-        />
+        <>
+          <p style={{margin:"0 0 6px",fontSize:"var(--gg-t1)",color:"#3a6090"}}>
+            {hoverName ? `İl: ${hoverName}` : "İlin üstüne gelin veya tıklayın"} · Sürükleyerek kaydırabilirsiniz
+          </p>
+          <div
+            style={{width:"100%",height:360,overflow:"hidden",background:"#eef6ff",borderRadius:8,padding:6,cursor:dragging?"grabbing":"grab",position:"relative"}}
+            onMouseDown={startDrag}
+            onMouseMove={moveDrag}
+            onMouseUp={endDrag}
+            onMouseLeave={() => { endDrag(); setHoverName(""); }}
+          >
+            <div
+              ref={mapRef}
+              onClick={onMapClick}
+              onMouseMove={onMapMouseMove}
+              style={{
+                width:"100%",
+                height:"100%",
+                display:"flex",
+                alignItems:"center",
+                justifyContent:"center",
+                transform:`translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                transformOrigin:"center center",
+                transition:dragging ? "none" : "transform .15s ease",
+              }}
+              dangerouslySetInnerHTML={{ __html: svgMarkup }}
+            />
+          </div>
+        </>
       )}
     </div>
   );
