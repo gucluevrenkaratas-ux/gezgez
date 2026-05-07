@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 
 function toKey(d) {
   if (!d) return "";
@@ -204,57 +204,76 @@ const CITIES_TR_GUNLUK = TR_PROVINCES.map((name) => {
   return { id, name, flag: "🏙️", sky: "", booking: id };
 });
 
-const TR_MAP_ROWS = [
-  ["Edirne","Kırklareli","Tekirdağ","İstanbul","Kocaeli","Sakarya","Düzce","Zonguldak","Bartın","Karabük","Kastamonu","Sinop"],
-  ["Çanakkale","Balıkesir","Bursa","Yalova","Bilecik","Bolu","Çankırı","Çorum","Samsun","Ordu","Giresun","Trabzon","Rize","Artvin"],
-  ["İzmir","Manisa","Kütahya","Eskişehir","Ankara","Kırıkkale","Kırşehir","Yozgat","Tokat","Amasya","Gümüşhane","Bayburt","Erzurum"],
-  ["Aydın","Denizli","Uşak","Afyonkarahisar","Konya","Aksaray","Nevşehir","Kayseri","Sivas","Erzincan","Tunceli","Bingöl","Muş","Kars","Ardahan","Iğdır"],
-  ["Muğla","Burdur","Isparta","Antalya","Karaman","Mersin","Niğde","Adana","Kahramanmaraş","Malatya","Elazığ","Diyarbakır","Batman","Siirt","Bitlis","Van","Hakkari"],
-  ["Şırnak","Mardin","Şanlıurfa","Gaziantep","Kilis","Osmaniye","Hatay","Adıyaman","Ağrı","Ardahan"],
-];
+function TurkeyMapPicker({ cityList, city, onSelect }) {
+  const [svgMarkup, setSvgMarkup] = useState("");
+  const [mapError, setMapError] = useState("");
+  const mapRef = useRef(null);
 
-function TurkeyMapPicker({ cityList, city, onSelect, query }) {
   const cityByName = useMemo(() => {
     const m = new Map();
     cityList.forEach((c) => m.set(normalizeTr(c.name), c));
     return m;
   }, [cityList]);
-  const q = normalizeTr(query).trim();
+
+  useEffect(() => {
+    let alive = true;
+    const loadSvg = async () => {
+      try {
+        setMapError("");
+        const r = await fetch("https://cdn.jsdelivr.net/gh/ali-han/Turkey-SVG-Map@main/src/turkey.svg");
+        if (!r.ok) throw new Error(`SVG yüklenemedi (${r.status})`);
+        const txt = await r.text();
+        if (alive) setSvgMarkup(txt);
+      } catch (e) {
+        if (alive) setMapError("Harita yüklenemedi. Şehir listesi ile devam edebilirsin.");
+      }
+    };
+    loadSvg();
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const nodes = mapRef.current.querySelectorAll("[data-city-name], path[id]");
+    nodes.forEach((n) => {
+      const cityName = n.getAttribute("data-city-name") || n.getAttribute("id") || "";
+      const mapped = cityByName.get(normalizeTr(cityName));
+      if (!mapped) return;
+      n.style.cursor = "pointer";
+      n.style.transition = "all .15s ease";
+      n.style.stroke = "#ffffff";
+      n.style.strokeWidth = "0.8";
+      if (mapped.id === city?.id) {
+        n.style.fill = "#378add";
+        n.style.opacity = "0.95";
+      } else {
+        n.style.fill = "#9fc7ef";
+        n.style.opacity = "0.9";
+      }
+    });
+  }, [svgMarkup, city, cityByName]);
+
+  const onMapClick = (e) => {
+    const target = e.target.closest("[data-city-name], path[id]");
+    if (!target) return;
+    const cityName = target.getAttribute("data-city-name") || target.getAttribute("id") || "";
+    const selected = cityByName.get(normalizeTr(cityName));
+    if (selected) onSelect(selected);
+  };
+
   return (
     <div style={{marginBottom:14,padding:"10px",border:"0.5px solid #b5d4f4",borderRadius:10,background:"#f7fbff"}}>
       <p style={{margin:"0 0 8px",fontSize:"var(--gg-t2)",color:"#185fa5",fontWeight:600}}>🗺️ Türkiye haritasından seç</p>
-      <div style={{display:"flex",flexDirection:"column",gap:4}}>
-        {TR_MAP_ROWS.map((row, ri) => (
-          <div key={ri} style={{display:"flex",flexWrap:"wrap",gap:4,justifyContent:"center"}}>
-            {row.map((name) => {
-              const c = cityByName.get(normalizeTr(name));
-              if (!c) return null;
-              const visible = !q || normalizeTr(c.name).includes(q);
-              if (!visible) return null;
-              const selected = city?.id === c.id;
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => onSelect(c)}
-                  title={c.name}
-                  style={{
-                    padding:"3px 7px",
-                    borderRadius:999,
-                    border:`1px solid ${selected ? "#378add" : "#c9ddf5"}`,
-                    background:selected ? "#e6f1fb" : "#ffffff",
-                    color:selected ? "#185fa5" : "#3d5d82",
-                    fontSize:"var(--gg-t1)",
-                    cursor:"pointer",
-                    whiteSpace:"nowrap",
-                  }}
-                >
-                  {c.name}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+      {mapError && <p style={{margin:"0 0 8px",fontSize:"var(--gg-t2)",color:"#a32d2d"}}>{mapError}</p>}
+      {!svgMarkup && !mapError && <p style={{margin:0,fontSize:"var(--gg-t2)",color:"#185fa5"}}>Harita yükleniyor...</p>}
+      {svgMarkup && (
+        <div
+          ref={mapRef}
+          onClick={onMapClick}
+          style={{width:"100%",maxHeight:340,overflow:"auto",background:"#eef6ff",borderRadius:8,padding:6}}
+          dangerouslySetInnerHTML={{ __html: svgMarkup }}
+        />
+      )}
     </div>
   );
 }
@@ -959,7 +978,7 @@ Mevcut açıklama: ${slot?.desc || ""}`;
                   placeholder="Şehir ara..."
                   style={{width:"100%",padding:"8px 10px",marginBottom:8,border:"0.5px solid var(--color-border-secondary)",borderRadius:8,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t2)",boxSizing:"border-box"}}
                 />
-                <TurkeyMapPicker cityList={cityList} city={city} onSelect={setCity} query={cityQuery}/>
+                <TurkeyMapPicker cityList={cityList} city={city} onSelect={setCity}/>
               </>
             )}
             <select value={city?.id||""} onChange={e=>{const c=cityList.find(x=>x.id===e.target.value);if(c)setCity(c);}}
