@@ -443,6 +443,7 @@ function ResultView({city,from,to,mod,plan,onReset,onRefreshSlot,refreshingSlotK
   const bUrl=`https://www.booking.com/searchresults.tr.html?ss=${encodeURIComponent(city?.booking||"")}&checkin=${from}&checkout=${to}`;
   const sUrl=`https://www.skyscanner.com.tr/transport/flights/ank/${city?.sky||""}/`;
   const fhInx = mod==="aile" ? FAMILY_HOTELS[city?.id] : null;
+  const isGunlukMode = mod === "macera" || mod === "local_foodie";
   const openGoogleSearch = (slot) => {
     const q = [slot?.place, city?.name, "gezi önerisi"].filter(Boolean).join(" ");
     const url = `https://www.google.com/search?q=${encodeURIComponent(q)}`;
@@ -479,7 +480,7 @@ function ResultView({city,from,to,mod,plan,onReset,onRefreshSlot,refreshingSlotK
           <a href={bUrl} target="_blank" rel="noreferrer" style={{flex:1,display:"block",padding:"10px",border:"0.5px solid #9fe1cb",borderRadius:8,background:"#e1f5ee",color:"#0f6e56",textAlign:"center",fontSize:"var(--gg-t3)",fontWeight:500,textDecoration:"none"}}>🏨 Booking</a>
         </div>
 
-        {plan.budget&&(
+        {!isGunlukMode && plan.budget&&(
           <Section icon="💰" title="Bütçe Özeti">
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
               {[["✈️ Uçak",plan.budget.flight],["🏨 Konaklama",plan.budget.hotel],["🍽️ Yeme",plan.budget.food],["🎭 Aktivite",plan.budget.activities]].map(([k,v])=>v?(
@@ -622,10 +623,12 @@ function ResultView({city,from,to,mod,plan,onReset,onRefreshSlot,refreshingSlotK
           </Section>
         )}
 
-        <div style={{marginTop:8,padding:"10px 14px",background:"#f0f7ff",borderRadius:10,border:"0.5px solid #dbeeff"}}>
-          <p style={{margin:"0 0 4px",fontSize:"var(--gg-t2)",fontWeight:600,color:"#185fa5"}}>📊 Bütçe Notu</p>
-          <p style={{margin:0,fontSize:"var(--gg-t2)",color:"#2a5080",lineHeight:1.6}}>Tahmini bütçe, geçmiş seyahat verilerine ve üst sınır hesaplamasına dayanır. Otel ve uçuş fiyatları doluluk oranı ile döviz kuruna göre <strong>%20–30 sapma</strong> gösterebilir. Kesin fiyat için Booking ve Skyscanner linklerini kullanın.</p>
-        </div>
+        {!isGunlukMode && (
+          <div style={{marginTop:8,padding:"10px 14px",background:"#f0f7ff",borderRadius:10,border:"0.5px solid #dbeeff"}}>
+            <p style={{margin:"0 0 4px",fontSize:"var(--gg-t2)",fontWeight:600,color:"#185fa5"}}>📊 Bütçe Notu</p>
+            <p style={{margin:0,fontSize:"var(--gg-t2)",color:"#2a5080",lineHeight:1.6}}>Tahmini bütçe, geçmiş seyahat verilerine ve üst sınır hesaplamasına dayanır. Otel ve uçuş fiyatları doluluk oranı ile döviz kuruna göre <strong>%20–30 sapma</strong> gösterebilir. Kesin fiyat için Booking ve Skyscanner linklerini kullanın.</p>
+          </div>
+        )}
       </div>
     </div>
   );
