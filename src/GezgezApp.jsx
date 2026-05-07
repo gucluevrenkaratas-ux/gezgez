@@ -700,6 +700,33 @@ function PlanPage({onBack, planType="yurtdisi"}) {
 
         <RecentSearches searches={searches} onSelect={loadSearch}/>
 
+        <SLabel>Günlük Gezi <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)"}}>(Tadım, Şehir Turu)</span></SLabel>
+        <div className="mod-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
+          {MODS_GUNLUK.map(m=>{
+            const sel=mod===m.id;
+            return(
+              <div key={m.id} onClick={()=>setMod(m.id)} style={{border:`2px solid ${sel?"#378add":"var(--color-border-tertiary)"}`,borderRadius:10,padding:"12px 14px",cursor:"pointer",background:sel?"#e6f1fb":"var(--color-background-primary)",position:"relative"}}>
+                {sel&&<span style={{position:"absolute",top:9,right:11,fontSize:"var(--gg-t3)",color:"#185fa5",fontWeight:700}}>✓</span>}
+                <p style={{margin:"0 0 3px",fontSize:"var(--gg-t3)",fontWeight:500,color:sel?"#185fa5":"var(--color-text-primary)"}}>{m.icon} {m.label}</p>
+                <p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)",lineHeight:1.4}}>{m.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        <SLabel>Seyahat Tarzı <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)"}}>(Konaklamalı)</span></SLabel>
+        <div className="mod-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+          {MODS_KONAKLAMALI.map(m=>{
+            const sel=mod===m.id;
+            return(
+              <div key={m.id} onClick={()=>setMod(m.id)} style={{border:`2px solid ${sel?"#378add":"var(--color-border-tertiary)"}`,borderRadius:10,padding:"12px 14px",cursor:"pointer",background:sel?"#e6f1fb":"var(--color-background-primary)",position:"relative"}}>
+                {sel&&<span style={{position:"absolute",top:9,right:11,fontSize:"var(--gg-t3)",color:"#185fa5",fontWeight:700}}>✓</span>}
+                <p style={{margin:"0 0 3px",fontSize:"var(--gg-t3)",fontWeight:500,color:sel?"#185fa5":"var(--color-text-primary)"}}>{m.icon} {m.label}</p>
+                <p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)",lineHeight:1.4}}>{m.desc}</p>
+              </div>
+            );
+          })}
+        </div>
         <SLabel>Kişi Sayısı</SLabel>
         <div style={{display:"flex",gap:10,marginBottom:12}}>
           <Counter label="Yetişkin" sub="18+" value={adults} min={1} max={8} onChange={setAdults}/>
@@ -754,33 +781,6 @@ function PlanPage({onBack, planType="yurtdisi"}) {
           💡 Aramalarınızı <strong>max. 3–4 gün</strong> olarak yaparsanız daha detaylı ve sağlıklı bilgi alabilirsiniz.
         </p>
 
-        <SLabel>Günlük Gezi <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)"}}>(Tadım, Şehir Turu)</span></SLabel>
-        <div className="mod-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
-          {MODS_GUNLUK.map(m=>{
-            const sel=mod===m.id;
-            return(
-              <div key={m.id} onClick={()=>setMod(m.id)} style={{border:`2px solid ${sel?"#378add":"var(--color-border-tertiary)"}`,borderRadius:10,padding:"12px 14px",cursor:"pointer",background:sel?"#e6f1fb":"var(--color-background-primary)",position:"relative"}}>
-                {sel&&<span style={{position:"absolute",top:9,right:11,fontSize:"var(--gg-t3)",color:"#185fa5",fontWeight:700}}>✓</span>}
-                <p style={{margin:"0 0 3px",fontSize:"var(--gg-t3)",fontWeight:500,color:sel?"#185fa5":"var(--color-text-primary)"}}>{m.icon} {m.label}</p>
-                <p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)",lineHeight:1.4}}>{m.desc}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        <SLabel>Seyahat Tarzı <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,fontSize:"var(--gg-t2)",color:"var(--color-text-tertiary)"}}>(Konaklamalı)</span></SLabel>
-        <div className="mod-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-          {MODS_KONAKLAMALI.map(m=>{
-            const sel=mod===m.id;
-            return(
-              <div key={m.id} onClick={()=>setMod(m.id)} style={{border:`2px solid ${sel?"#378add":"var(--color-border-tertiary)"}`,borderRadius:10,padding:"12px 14px",cursor:"pointer",background:sel?"#e6f1fb":"var(--color-background-primary)",position:"relative"}}>
-                {sel&&<span style={{position:"absolute",top:9,right:11,fontSize:"var(--gg-t3)",color:"#185fa5",fontWeight:700}}>✓</span>}
-                <p style={{margin:"0 0 3px",fontSize:"var(--gg-t3)",fontWeight:500,color:sel?"#185fa5":"var(--color-text-primary)"}}>{m.icon} {m.label}</p>
-                <p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)",lineHeight:1.4}}>{m.desc}</p>
-              </div>
-            );
-          })}
-        </div>
         <SLabel>Hızlı Gezi Şehirleri</SLabel>
         <div className="city-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20}}>
           {cityList.map(c=>{
