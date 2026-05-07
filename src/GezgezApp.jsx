@@ -443,6 +443,11 @@ function ResultView({city,from,to,mod,plan,onReset,onRefreshSlot,refreshingSlotK
   const bUrl=`https://www.booking.com/searchresults.tr.html?ss=${encodeURIComponent(city?.booking||"")}&checkin=${from}&checkout=${to}`;
   const sUrl=`https://www.skyscanner.com.tr/transport/flights/ank/${city?.sky||""}/`;
   const fhInx = mod==="aile" ? FAMILY_HOTELS[city?.id] : null;
+  const openGoogleSearch = (slot) => {
+    const q = [slot?.place, city?.name, "gezi önerisi"].filter(Boolean).join(" ");
+    const url = `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   const Section=({icon,title,children})=>(
     <div style={{marginBottom:18,padding:"14px 16px",background:"var(--color-background-secondary)",borderRadius:12,border:"0.5px solid var(--color-border-tertiary)"}}>
@@ -572,13 +577,21 @@ function ResultView({city,from,to,mod,plan,onReset,onRefreshSlot,refreshingSlotK
                         {!isStr&&(
                           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:1}}>
                             {s.time&&<p style={{margin:0,fontSize:"var(--gg-t1)",color:"var(--color-text-tertiary)",fontWeight:600,letterSpacing:"0.05em"}}>{s.time.toUpperCase()}</p>}
-                            <button
-                              onClick={()=>onRefreshSlot?.({dayIndex:activeDay,slotIndex:i,slot:s})}
-                              disabled={!onRefreshSlot || isRefreshing}
-                              style={{padding:"2px 8px",border:"0.5px solid #b5d4f4",borderRadius:999,background:isRefreshing?"#f0f7ff":"#e6f1fb",color:"#185fa5",fontSize:"var(--gg-t1)",cursor:isRefreshing?"wait":"pointer",whiteSpace:"nowrap"}}
-                            >
-                              {isRefreshing?"Yenileniyor...":"Yeni öneri"}
-                            </button>
+                            <div style={{display:"flex",alignItems:"center",gap:6}}>
+                              <button
+                                onClick={()=>onRefreshSlot?.({dayIndex:activeDay,slotIndex:i,slot:s})}
+                                disabled={!onRefreshSlot || isRefreshing}
+                                style={{padding:"2px 8px",border:"0.5px solid #b5d4f4",borderRadius:999,background:isRefreshing?"#f0f7ff":"#e6f1fb",color:"#185fa5",fontSize:"var(--gg-t1)",cursor:isRefreshing?"wait":"pointer",whiteSpace:"nowrap"}}
+                              >
+                                {isRefreshing?"Yenileniyor...":"Yeni öneri"}
+                              </button>
+                              <button
+                                onClick={()=>openGoogleSearch(s)}
+                                style={{padding:"2px 8px",border:"0.5px solid #d3d1c7",borderRadius:999,background:"#f1efe8",color:"#5f5e5a",fontSize:"var(--gg-t1)",cursor:"pointer",whiteSpace:"nowrap"}}
+                              >
+                                Google'da ara
+                              </button>
+                            </div>
                           </div>
                         )}
                         {!isStr&&s.place&&<p style={{margin:"0 0 2px",fontSize:"var(--gg-t3)",fontWeight:500}}>{s.place}</p>}
