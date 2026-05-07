@@ -438,7 +438,7 @@ function Counter({label,sub,value,min,max,onChange}) {
   );
 }
 
-function ResultView({city,from,to,mod,plan,onReset}) {
+function ResultView({city,from,to,mod,plan,onReset,onRefreshSlot,refreshingSlotKey}) {
   const [activeDay,setActiveDay] = useState(0);
   const bUrl=`https://www.booking.com/searchresults.tr.html?ss=${encodeURIComponent(city?.booking||"")}&checkin=${from}&checkout=${to}`;
   const sUrl=`https://www.skyscanner.com.tr/transport/flights/ank/${city?.sky||""}/`;
@@ -563,11 +563,24 @@ function ResultView({city,from,to,mod,plan,onReset}) {
                 <p style={{margin:"0 0 12px",fontSize:"var(--gg-t3)",fontWeight:600}}>{plan.days[activeDay].title}</p>
                 {(plan.days[activeDay].slots||plan.days[activeDay].activities||[]).map((s,i)=>{
                   const isStr = typeof s === "string";
+                  const slotKey = `${activeDay}-${i}`;
+                  const isRefreshing = refreshingSlotKey === slotKey;
                   return(
                     <div key={i} style={{display:"flex",gap:10,marginBottom:10,paddingLeft:4}}>
                       <div style={{width:2,background:"var(--color-border-secondary)",borderRadius:2,flexShrink:0,marginTop:4}}/>
                       <div style={{flex:1}}>
-                        {!isStr&&s.time&&<p style={{margin:"0 0 1px",fontSize:"var(--gg-t1)",color:"var(--color-text-tertiary)",fontWeight:600,letterSpacing:"0.05em"}}>{s.time.toUpperCase()}</p>}
+                        {!isStr&&(
+                          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:1}}>
+                            {s.time&&<p style={{margin:0,fontSize:"var(--gg-t1)",color:"var(--color-text-tertiary)",fontWeight:600,letterSpacing:"0.05em"}}>{s.time.toUpperCase()}</p>}
+                            <button
+                              onClick={()=>onRefreshSlot?.({dayIndex:activeDay,slotIndex:i,slot:s})}
+                              disabled={!onRefreshSlot || isRefreshing}
+                              style={{padding:"2px 8px",border:"0.5px solid #b5d4f4",borderRadius:999,background:isRefreshing?"#f0f7ff":"#e6f1fb",color:"#185fa5",fontSize:"var(--gg-t1)",cursor:isRefreshing?"wait":"pointer",whiteSpace:"nowrap"}}
+                            >
+                              {isRefreshing?"Yenileniyor...":"Yeni öneri"}
+                            </button>
+                          </div>
+                        )}
                         {!isStr&&s.place&&<p style={{margin:"0 0 2px",fontSize:"var(--gg-t3)",fontWeight:500}}>{s.place}</p>}
                         <p style={{margin:0,fontSize:"var(--gg-t2)",color:"var(--color-text-secondary)",lineHeight:1.5}}>{isStr?s:s.desc}</p>
                         {!isStr&&s.food&&<div style={{marginTop:4,display:"inline-flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:16,background:"#faeeda",border:"0.5px solid #fac775"}}><span style={{fontSize:"var(--gg-t2)"}}>🍽️</span><span style={{fontSize:"var(--gg-t2)",color:"#854f0b",fontWeight:500}}>{s.food}</span></div>}
@@ -642,6 +655,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
   const [note,setNote]=useState("");
   const [planResult,setPlanResult]=useState(null);
   const [loading,setLoading]=useState(false);
+  const [refreshingSlotKey,setRefreshingSlotKey]=useState("");
   const [status,setStatus]=useState("");
   const [error,setError]=useState("");
   const [searches,setSearches]=useState([]);
@@ -701,7 +715,46 @@ function PlanPage({onBack, planType="yurtdisi"}) {
     go({city:c,from:s.from,to:s.to,mod:s.mod});
   };
 
-  if(planResult) return <ResultView {...planResult} onReset={()=>setPlanResult(null)}/>;
+  const refreshSlot = async ({dayIndex,slotIndex,slot}) => {
+    if (!planResult?.plan?.days?.[dayIndex]) return;
+    const key = `${dayIndex}-${slotIndex}`;
+    setRefreshingSlotKey(key);
+    setError("");
+    try {
+      const day = planResult.plan.days[dayIndex];
+      const prompt = `Aşağıdaki seyahat programı slotu için alternatif bir öneri üret.
+SADECE JSON döndür:
+{"place":"mekan adı","desc":"2-3 cümle açıklama","food":"yemek önerisi veya boş string","tasima":"ulaşım detayı","sure":"süre"}
+
+Şehir: ${planResult.city?.name}
+Mod: ${MODS.find(m=>m.id===planResult.mod)?.label || planResult.mod}
+Gün başlığı: ${day.title || `${dayIndex + 1}. gün`}
+Saat: ${slot?.time || ""}
+Mevcut yer: ${slot?.place || ""}
+Mevcut açıklama: ${slot?.desc || ""}`;
+      const alt = await askGemini(prompt);
+      setPlanResult(prev => {
+        if (!prev?.plan?.days?.[dayIndex]) return prev;
+        const next = JSON.parse(JSON.stringify(prev));
+        const currentSlot = next.plan.days[dayIndex].slots?.[slotIndex];
+        if (!currentSlot) return prev;
+        next.plan.days[dayIndex].slots[slotIndex] = {
+          ...currentSlot,
+          place: alt.place || currentSlot.place,
+          desc: alt.desc || currentSlot.desc,
+          food: alt.food !== undefined ? alt.food : currentSlot.food,
+          tasima: alt.tasima || currentSlot.tasima,
+          sure: alt.sure || currentSlot.sure,
+        };
+        return next;
+      });
+    } catch (err) {
+      setError("Yeni öneri alınamadı: " + err.message);
+    }
+    setRefreshingSlotKey("");
+  };
+
+  if(planResult) return <ResultView {...planResult} onReset={()=>setPlanResult(null)} onRefreshSlot={refreshSlot} refreshingSlotKey={refreshingSlotKey}/>;
 
   return(
     <div>
