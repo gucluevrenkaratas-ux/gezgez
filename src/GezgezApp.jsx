@@ -72,8 +72,22 @@ function buildPrompt(city, from, to, mod, adults, children, childAges, note, isY
     ? `"ulasim":{"info":"otobüs/uçak seçeneği ve TL fiyat","tip":"tavsiye"},`
     : `"flight":{"info":"havayolu ve TL fiyat","tip":"tavsiye"},`;
   const ucusKey = isYurtici ? "ulasim" : "flight";
+  const isGunlukMod = (mod === "Macera" || mod === "Yerel Gurme");
 
-  return `Gezgez seyahat asistanısın. Türkçe, kısa ve öz yaz.
+  if (isGunlukMod) {
+    const gunlukTalimat = mod === "Yerel Gurme"
+      ? "TripAdvisor listelerinden uzak dur. Esnaf lokantaları, tabelasız aile işletmeleri, fermentasyon/tandır/taş fırın üretimi yapan yerler, hikayesi olan yemekler, sokak lezzetleri ve geleneksel içecekler (şalgam, boza, ayran) öner. Her mekanın kısa hikayesini yaz."
+      : "Doğal parklar, tırmanış noktaları, su sporları, bisiklet rotaları planla. Her slot için fiziksel zorluk seviyesi (kolay/orta/zor) ve gereken ekipmanı belirt. Ulaşım detaylarını ver.";
+    return `Gezgez seyahat asistanısın. Türkçe yaz.
+${guzergah}, ${mod} GÜNLÜK GEZİ, tarih: ${from}, ${kisi}.${ekIstek}
+
+Bu tek günlük saatlik detaylı bir gezi planıdır. SADECE JSON döndür:
+{"title":"${city.name} ${mod} Günü","subtitle":"tek günlük detaylı program","weather":"hava ve kıyafet önerisi","hotels":[],"days":[{"day":1,"title":"${mod} Günü","slots":[{"time":"08:00","place":"yer adı","desc":"2-3 cümle detaylı açıklama","food":"kahvaltı önerisi","tasima":"ulaşım detayı","sure":"süre"},{"time":"09:30","place":"yer adı","desc":"2-3 cümle detaylı açıklama","food":"","tasima":"ulaşım detayı","sure":"süre"},{"time":"11:00","place":"yer adı","desc":"2-3 cümle detaylı açıklama","food":"ara lezzet","tasima":"ulaşım detayı","sure":"süre"},{"time":"13:00","place":"yer adı","desc":"2-3 cümle detaylı açıklama","food":"öğle yemeği","tasima":"ulaşım detayı","sure":"süre"},{"time":"15:00","place":"yer adı","desc":"2-3 cümle detaylı açıklama","food":"","tasima":"ulaşım detayı","sure":"süre"},{"time":"17:00","place":"yer adı","desc":"2-3 cümle detaylı açıklama","food":"ikindi lezzeti","tasima":"ulaşım detayı","sure":"süre"},{"time":"19:00","place":"yer adı","desc":"2-3 cümle detaylı açıklama","food":"akşam yemeği","tasima":"ulaşım detayı","sure":"süre"}]}],"tastes":["lezzet 1","lezzet 2","lezzet 3","lezzet 4"],"budget":{"${isYurtici?"ulasim":"flight"}":"TL","hotel":"konaklama yok (günübirlik)","food":"TL","activities":"TL","total_per_person":"TL","total_group":"TL"},"tips":["tavsiye 1","tavsiye 2","tavsiye 3"]}
+${gunlukTalimat}
+Her yer gerçek ve spesifik isim olsun. Açıklamalar detaylı olsun. Ulaşım ve süre kesinlikle doldurulsun.`;
+  }
+
+  return \`Gezgez seyahat asistanısın. Türkçe, kısa ve öz yaz.
 ${guzergah}, ${mod}, ${from}-${to}, ${nights} gece, ${kisi}.${ekIstek}
 
 SADECE JSON döndür:
