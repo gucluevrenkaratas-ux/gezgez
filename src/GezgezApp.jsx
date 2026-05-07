@@ -208,7 +208,7 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
   const [svgMarkup, setSvgMarkup] = useState("");
   const [mapError, setMapError] = useState("");
   const [hoverName, setHoverName] = useState("");
-  const [zoom, setZoom] = useState(1.2);
+  const [zoom, setZoom] = useState(1.0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const mapRef = useRef(null);
@@ -279,7 +279,7 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
 
   const zoomIn = () => setZoom((z) => Math.min(2.4, +(z + 0.15).toFixed(2)));
   const zoomOut = () => setZoom((z) => Math.max(0.8, +(z - 0.15).toFixed(2)));
-  const resetView = () => { setZoom(1.2); setPan({ x: 0, y: 0 }); };
+  const resetView = () => { setZoom(1.0); setPan({ x: 0, y: 0 }); };
 
   const startDrag = (e) => {
     setDragging(true);
@@ -312,7 +312,7 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
             {hoverName ? `İl: ${hoverName}` : "İlin üstüne gelin veya tıklayın"} · Sürükleyerek kaydırabilirsiniz
           </p>
           <div
-            style={{width:"100%",height:360,overflow:"hidden",background:"#eef6ff",borderRadius:8,padding:6,cursor:dragging?"grabbing":"grab",position:"relative"}}
+            style={{width:"100%",height:432,overflow:"hidden",background:"#eef6ff",borderRadius:8,padding:6,cursor:dragging?"grabbing":"grab",position:"relative",margin:"0 auto"}}
             onMouseDown={startDrag}
             onMouseMove={moveDrag}
             onMouseUp={endDrag}
