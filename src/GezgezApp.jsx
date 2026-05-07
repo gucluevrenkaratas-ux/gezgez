@@ -185,12 +185,79 @@ function slugifyTr(text) {
     .replace(/(^-|-$)/g, "");
 }
 
+function normalizeTr(text) {
+  return (text || "")
+    .toLowerCase()
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/i̇/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u");
+}
+
 const CITIES_TR_GUNLUK = TR_PROVINCES.map((name) => {
   const id = slugifyTr(name);
   const existing = CITIES_TR.find((c) => c.id === id);
   if (existing) return existing;
   return { id, name, flag: "🏙️", sky: "", booking: id };
 });
+
+const TR_MAP_ROWS = [
+  ["Edirne","Kırklareli","Tekirdağ","İstanbul","Kocaeli","Sakarya","Düzce","Zonguldak","Bartın","Karabük","Kastamonu","Sinop"],
+  ["Çanakkale","Balıkesir","Bursa","Yalova","Bilecik","Bolu","Çankırı","Çorum","Samsun","Ordu","Giresun","Trabzon","Rize","Artvin"],
+  ["İzmir","Manisa","Kütahya","Eskişehir","Ankara","Kırıkkale","Kırşehir","Yozgat","Tokat","Amasya","Gümüşhane","Bayburt","Erzurum"],
+  ["Aydın","Denizli","Uşak","Afyonkarahisar","Konya","Aksaray","Nevşehir","Kayseri","Sivas","Erzincan","Tunceli","Bingöl","Muş","Kars","Ardahan","Iğdır"],
+  ["Muğla","Burdur","Isparta","Antalya","Karaman","Mersin","Niğde","Adana","Kahramanmaraş","Malatya","Elazığ","Diyarbakır","Batman","Siirt","Bitlis","Van","Hakkari"],
+  ["Şırnak","Mardin","Şanlıurfa","Gaziantep","Kilis","Osmaniye","Hatay","Adıyaman","Ağrı","Ardahan"],
+];
+
+function TurkeyMapPicker({ cityList, city, onSelect, query }) {
+  const cityByName = useMemo(() => {
+    const m = new Map();
+    cityList.forEach((c) => m.set(normalizeTr(c.name), c));
+    return m;
+  }, [cityList]);
+  const q = normalizeTr(query).trim();
+  return (
+    <div style={{marginBottom:14,padding:"10px",border:"0.5px solid #b5d4f4",borderRadius:10,background:"#f7fbff"}}>
+      <p style={{margin:"0 0 8px",fontSize:"var(--gg-t2)",color:"#185fa5",fontWeight:600}}>🗺️ Türkiye haritasından seç</p>
+      <div style={{display:"flex",flexDirection:"column",gap:4}}>
+        {TR_MAP_ROWS.map((row, ri) => (
+          <div key={ri} style={{display:"flex",flexWrap:"wrap",gap:4,justifyContent:"center"}}>
+            {row.map((name) => {
+              const c = cityByName.get(normalizeTr(name));
+              if (!c) return null;
+              const visible = !q || normalizeTr(c.name).includes(q);
+              if (!visible) return null;
+              const selected = city?.id === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => onSelect(c)}
+                  title={c.name}
+                  style={{
+                    padding:"3px 7px",
+                    borderRadius:999,
+                    border:`1px solid ${selected ? "#378add" : "#c9ddf5"}`,
+                    background:selected ? "#e6f1fb" : "#ffffff",
+                    color:selected ? "#185fa5" : "#3d5d82",
+                    fontSize:"var(--gg-t1)",
+                    cursor:"pointer",
+                    whiteSpace:"nowrap",
+                  }}
+                >
+                  {c.name}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const MODS_KONAKLAMALI = [
   {id:"aile",       icon:"👨‍👩‍👧",label:"Aile",        desc:"Çocuk dostu, güvenli, erken programlar"},
@@ -692,6 +759,7 @@ function RecentSearches({searches,onSelect}) {
 function PlanPage({onBack, planType="yurtdisi"}) {
   const isYurtici = planType === "yurtici";
   const [city,setCity]=useState(null);
+  const [cityQuery,setCityQuery]=useState("");
   const [from,setFrom]=useState("");
   const [to,setTo]=useState("");
   const [mod,setMod]=useState("aile");
@@ -740,6 +808,11 @@ function PlanPage({onBack, planType="yurtdisi"}) {
   const selMod=MODS.find(m=>m.id===mod);
   const isGunlukMode = MODS_GUNLUK.some(m=>m.id===mod);
   const cityList = isYurtici ? (isGunlukMode ? CITIES_TR_GUNLUK : CITIES_TR) : CITIES;
+  const filteredCityList = useMemo(() => {
+    const q = normalizeTr(cityQuery).trim();
+    if (!q) return cityList;
+    return cityList.filter((c) => normalizeTr(c.name).includes(q));
+  }, [cityList, cityQuery]);
   const canGo=city&&from&&to&&!loading;
 
   const go=async(ov={})=>{
@@ -878,10 +951,21 @@ Mevcut açıklama: ${slot?.desc || ""}`;
           </div>
           <div>
             <SLabel>Gezilecek Şehir</SLabel>
+            {isYurtici && isGunlukMode && (
+              <>
+                <input
+                  value={cityQuery}
+                  onChange={e=>setCityQuery(e.target.value)}
+                  placeholder="Şehir ara..."
+                  style={{width:"100%",padding:"8px 10px",marginBottom:8,border:"0.5px solid var(--color-border-secondary)",borderRadius:8,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t2)",boxSizing:"border-box"}}
+                />
+                <TurkeyMapPicker cityList={cityList} city={city} onSelect={setCity} query={cityQuery}/>
+              </>
+            )}
             <select value={city?.id||""} onChange={e=>{const c=cityList.find(x=>x.id===e.target.value);if(c)setCity(c);}}
               style={{width:"100%",padding:"11px 14px",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t3)",fontFamily:"inherit",cursor:"pointer"}}>
               <option value="">— Seç —</option>
-              {cityList.map(c=>(
+              {filteredCityList.map(c=>(
                 <option key={c.id} value={c.id}>{c.flag} {c.name}</option>
               ))}
             </select>
@@ -899,7 +983,7 @@ Mevcut açıklama: ${slot?.desc || ""}`;
 
         <SLabel>Hızlı Gezi Şehirleri</SLabel>
         <div className="city-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20}}>
-          {cityList.map(c=>{
+          {filteredCityList.map(c=>{
             const sel=city?.id===c.id;
             return(
               <div key={c.id} onClick={()=>setCity(c)} style={{border:`2px solid ${sel?"#378add":"var(--color-border-tertiary)"}`,borderRadius:8,padding:"10px 6px",cursor:"pointer",background:sel?"#e6f1fb":"var(--color-background-primary)",textAlign:"center",position:"relative"}}>
