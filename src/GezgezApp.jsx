@@ -160,6 +160,38 @@ const CITIES_TR = [
   {id:"balikesir", name:"Balıkesir",  flag:"🫒",sky:"BZI",booking:"balikesir"},
 ];
 
+const TR_PROVINCES = [
+  "Adana","Adıyaman","Afyonkarahisar","Ağrı","Amasya","Ankara","Antalya","Artvin","Aydın","Balıkesir",
+  "Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli",
+  "Diyarbakır","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkari",
+  "Hatay","Isparta","Mersin","İstanbul","İzmir","Kars","Kastamonu","Kayseri","Kırklareli","Kırşehir",
+  "Kocaeli","Konya","Kütahya","Malatya","Manisa","Kahramanmaraş","Mardin","Muğla","Muş","Nevşehir",
+  "Niğde","Ordu","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Tekirdağ","Tokat",
+  "Trabzon","Tunceli","Şanlıurfa","Uşak","Van","Yozgat","Zonguldak","Aksaray","Bayburt","Karaman",
+  "Kırıkkale","Batman","Şırnak","Bartın","Ardahan","Iğdır","Yalova","Karabük","Kilis","Osmaniye","Düzce",
+];
+
+function slugifyTr(text) {
+  return text
+    .toLowerCase()
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/i̇/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+const CITIES_TR_GUNLUK = TR_PROVINCES.map((name) => {
+  const id = slugifyTr(name);
+  const existing = CITIES_TR.find((c) => c.id === id);
+  if (existing) return existing;
+  return { id, name, flag: "🏙️", sky: "", booking: id };
+});
+
 const MODS_KONAKLAMALI = [
   {id:"aile",       icon:"👨‍👩‍👧",label:"Aile",        desc:"Çocuk dostu, güvenli, erken programlar"},
   {id:"butce",      icon:"💸",   label:"Bütçe Dostu", desc:"Ekonomik konaklama, ücretsiz müzeler"},
@@ -659,7 +691,6 @@ function RecentSearches({searches,onSelect}) {
 
 function PlanPage({onBack, planType="yurtdisi"}) {
   const isYurtici = planType === "yurtici";
-  const cityList = isYurtici ? CITIES_TR : CITIES;
   const [city,setCity]=useState(null);
   const [from,setFrom]=useState("");
   const [to,setTo]=useState("");
@@ -707,6 +738,8 @@ function PlanPage({onBack, planType="yurtdisi"}) {
   };
 
   const selMod=MODS.find(m=>m.id===mod);
+  const isGunlukMode = MODS_GUNLUK.some(m=>m.id===mod);
+  const cityList = isYurtici ? (isGunlukMode ? CITIES_TR_GUNLUK : CITIES_TR) : CITIES;
   const canGo=city&&from&&to&&!loading;
 
   const go=async(ov={})=>{
