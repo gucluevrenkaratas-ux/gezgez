@@ -220,6 +220,19 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
     return m;
   }, [cityList]);
 
+  const readCityName = (node) => {
+    if (!node) return "";
+    return (
+      node.getAttribute("data-city-name") ||
+      node.getAttribute("data-iladi") ||
+      node.getAttribute("data-name") ||
+      node.getAttribute("name") ||
+      node.getAttribute("title") ||
+      node.getAttribute("id") ||
+      ""
+    );
+  };
+
   useEffect(() => {
     let alive = true;
     const loadSvg = async () => {
@@ -239,15 +252,23 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
 
   useEffect(() => {
     if (!mapRef.current) return;
-    const nodes = mapRef.current.querySelectorAll("[data-city-name], path[id]");
+    const svg = mapRef.current.querySelector("svg");
+    if (svg) {
+      svg.style.display = "block";
+      svg.style.width = "120%";
+      svg.style.height = "auto";
+      svg.style.maxWidth = "none";
+      svg.style.margin = "0 auto";
+    }
+    const nodes = mapRef.current.querySelectorAll("[data-city-name], [data-iladi], [data-name], path[id], g[id]");
     nodes.forEach((n) => {
-      const cityName = n.getAttribute("data-city-name") || n.getAttribute("id") || "";
+      const cityName = readCityName(n);
       const mapped = cityByName.get(normalizeTr(cityName));
-      if (!mapped) return;
       n.style.cursor = "pointer";
       n.style.transition = "all .15s ease";
       n.style.stroke = "#ffffff";
       n.style.strokeWidth = "0.8";
+      if (!mapped) return;
       if (mapped.id === city?.id) {
         n.style.fill = "#378add";
         n.style.opacity = "0.95";
@@ -259,22 +280,22 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
   }, [svgMarkup, city, cityByName]);
 
   const onMapClick = (e) => {
-    const target = e.target.closest("[data-city-name], path[id]");
+    const target = e.target.closest("[data-city-name], [data-iladi], [data-name], path[id], g[id]");
     if (!target) return;
-    const cityName = target.getAttribute("data-city-name") || target.getAttribute("id") || "";
+    const cityName = readCityName(target);
     const selected = cityByName.get(normalizeTr(cityName));
     if (selected) onSelect(selected);
   };
 
   const onMapMouseMove = (e) => {
-    const target = e.target.closest("[data-city-name], path[id]");
+    const target = e.target.closest("[data-city-name], [data-iladi], [data-name], path[id], g[id]");
     if (!target) {
       setHoverName("");
       return;
     }
-    const cityName = target.getAttribute("data-city-name") || target.getAttribute("id") || "";
+    const cityName = readCityName(target);
     const selected = cityByName.get(normalizeTr(cityName));
-    setHoverName(selected?.name || cityName);
+    setHoverName(selected?.name || "");
   };
 
   const zoomIn = () => setZoom((z) => Math.min(2.4, +(z + 0.15).toFixed(2)));
@@ -331,6 +352,7 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
                 transform:`translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                 transformOrigin:"center center",
                 transition:dragging ? "none" : "transform .15s ease",
+                margin:"0 auto",
               }}
               dangerouslySetInnerHTML={{ __html: svgMarkup }}
             />
