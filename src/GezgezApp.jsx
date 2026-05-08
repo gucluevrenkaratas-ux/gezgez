@@ -213,6 +213,23 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
   const [dragging, setDragging] = useState(false);
   const mapRef = useRef(null);
   const dragRef = useRef({ startX: 0, startY: 0, panX: 0, panY: 0 });
+  const hoverNodeRef = useRef(null);
+
+  const getOriginalFill = (mapped) => {
+    if (!mapped) return "";
+    return mapped.id === city?.id ? "#378add" : "#9fc7ef";
+  };
+
+  const restoreHoverNode = (node) => {
+    if (!node) return;
+    const prevName = readCityName(node);
+    const prevMapped = cityByName.get(normalizeTr(prevName));
+    const fill = getOriginalFill(prevMapped);
+    if (fill) node.style.fill = fill;
+    node.style.opacity = prevMapped?.id === city?.id ? "0.95" : "0.9";
+    node.style.filter = "";
+    node.style.transform = "";
+  };
 
   const cityByName = useMemo(() => {
     const m = new Map();
@@ -255,10 +272,8 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
     const svg = mapRef.current.querySelector("svg");
     if (svg) {
       svg.style.display = "block";
-      svg.style.width = "120%";
+      svg.style.width = "100%";
       svg.style.height = "auto";
-      svg.style.maxWidth = "none";
-      svg.style.margin = "0 auto";
     }
     const nodes = mapRef.current.querySelectorAll("[data-city-name], [data-iladi], [data-name], path[id], g[id]");
     nodes.forEach((n) => {
@@ -289,13 +304,32 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
 
   const onMapMouseMove = (e) => {
     const target = e.target.closest("[data-city-name], [data-iladi], [data-name], path[id], g[id]");
+
+    // Restore previous hovered node if we moved to a different one
+    if (hoverNodeRef.current && hoverNodeRef.current !== target) {
+      restoreHoverNode(hoverNodeRef.current);
+      hoverNodeRef.current = null;
+    }
+
     if (!target) {
       setHoverName("");
       return;
     }
+
     const cityName = readCityName(target);
-    const selected = cityByName.get(normalizeTr(cityName));
-    setHoverName(selected?.name || "");
+    const mapped = cityByName.get(normalizeTr(cityName));
+
+    // Apply hover highlight to new node
+    if (mapped && hoverNodeRef.current !== target) {
+      target.style.fill = mapped.id === city?.id ? "#5aaef5" : "#4db8ff";
+      target.style.opacity = "1";
+      target.style.filter = "drop-shadow(0 0 5px rgba(55,138,221,0.55))";
+      target.style.transform = "scale(1.02)";
+      target.style.transformOrigin = "center";
+      hoverNodeRef.current = target;
+    }
+
+    setHoverName(mapped?.name || "");
   };
 
   const zoomIn = () => setZoom((z) => Math.min(2.4, +(z + 0.15).toFixed(2)));
@@ -333,11 +367,11 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
             {hoverName ? `İl: ${hoverName}` : "İlin üstüne gelin veya tıklayın"} · Sürükleyerek kaydırabilirsiniz
           </p>
           <div
-            style={{width:"100%",height:432,overflow:"hidden",background:"#eef6ff",borderRadius:8,padding:6,cursor:dragging?"grabbing":"grab",position:"relative",margin:"0 auto"}}
+            style={{width:"100%",height:280,overflow:"hidden",background:"#eef6ff",borderRadius:8,cursor:dragging?"grabbing":"grab",position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}
             onMouseDown={startDrag}
             onMouseMove={moveDrag}
             onMouseUp={endDrag}
-            onMouseLeave={() => { endDrag(); setHoverName(""); }}
+            onMouseLeave={() => { endDrag(); setHoverName(""); restoreHoverNode(hoverNodeRef.current); hoverNodeRef.current = null; }}
           >
             <div
               ref={mapRef}
@@ -345,14 +379,12 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
               onMouseMove={onMapMouseMove}
               style={{
                 width:"100%",
-                height:"100%",
                 display:"flex",
                 alignItems:"center",
                 justifyContent:"center",
                 transform:`translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                 transformOrigin:"center center",
                 transition:dragging ? "none" : "transform .15s ease",
-                margin:"0 auto",
               }}
               dangerouslySetInnerHTML={{ __html: svgMarkup }}
             />
