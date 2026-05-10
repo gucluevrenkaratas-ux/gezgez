@@ -273,7 +273,7 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
     if (svg) {
       svg.style.display = "block";
       svg.style.width = "100%";
-      svg.style.height = "auto";
+      svg.style.height = "80%";
       svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
     }
     const nodes = mapRef.current.querySelectorAll("[data-city-name], [data-iladi], [data-name], path[id], g[id]");
@@ -322,7 +322,7 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
 
     // Apply hover highlight to new node
     if (mapped && hoverNodeRef.current !== target) {
-      target.style.fill = mapped.id === city?.id ? "#5aaef5" : "#4db8ff";
+      target.style.fill = mapped.id === city?.id ? "#5aaef5" : "#002640";
       target.style.opacity = "1";
       target.style.filter = "drop-shadow(0 0 5px rgba(55,138,221,0.55))";
       target.style.transform = "scale(1.02)";
