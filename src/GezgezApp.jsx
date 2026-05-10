@@ -984,6 +984,7 @@ function PlanPage({onBack, planType="yurtdisi"}) {
   const isYurtici = planType === "yurtici";
   const [city,setCity]=useState(null);
   const [cityQuery,setCityQuery]=useState("");
+  const [hoveredCity,setHoveredCity]=useState(null);
   const [from,setFrom]=useState("");
   const [to,setTo]=useState("");
   const [mod,setMod]=useState("aile");
@@ -1211,11 +1212,28 @@ Mevcut açıklama: ${slot?.desc || ""}`;
         <div className="city-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20}}>
           {filteredCityList.map(c=>{
             const sel=city?.id===c.id;
+            const hov=hoveredCity===c.id && !sel;
             return(
-              <div key={c.id} onClick={()=>setCity(c)} style={{border:`2px solid ${sel?"#378add":"var(--color-border-tertiary)"}`,borderRadius:8,padding:"10px 6px",cursor:"pointer",background:sel?"#e6f1fb":"var(--color-background-primary)",textAlign:"center",position:"relative"}}>
+              <div
+                key={c.id}
+                onClick={()=>setCity(c)}
+                onMouseEnter={()=>setHoveredCity(c.id)}
+                onMouseLeave={()=>setHoveredCity(null)}
+                style={{
+                  border:`2px solid ${sel?"#378add":hov?"#7ab8f0":"var(--color-border-tertiary)"}`,
+                  borderRadius:8,
+                  padding:"10px 6px",
+                  cursor:"pointer",
+                  background:sel?"#e6f1fb":hov?"#daeeff":"var(--color-background-primary)",
+                  textAlign:"center",
+                  position:"relative",
+                  transform:hov?"translateY(-2px)":"none",
+                  boxShadow:hov?"0 4px 12px rgba(55,138,221,0.18)":"none",
+                  transition:"transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease",
+                }}>
                 {sel&&<span style={{position:"absolute",top:4,right:6,fontSize:"var(--gg-t1)",color:"#185fa5",fontWeight:700}}>✓</span>}
                 <p style={{margin:"0 0 3px",fontSize:22,lineHeight:1.2}}>{c.flag}</p>
-                <p style={{margin:0,fontSize:"var(--gg-t2)",color:sel?"#185fa5":"var(--color-text-primary)",fontWeight:sel?600:400}}>{c.name}</p>
+                <p style={{margin:0,fontSize:"var(--gg-t2)",color:sel?"#185fa5":hov?"#2272c3":"var(--color-text-primary)",fontWeight:sel||hov?600:400}}>{c.name}</p>
               </div>
             );
           })}
