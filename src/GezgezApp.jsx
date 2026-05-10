@@ -1097,15 +1097,12 @@ Mevcut açıklama: ${slot?.desc || ""}`;
           <div>
             <SLabel>Gezilecek Şehir</SLabel>
             {isYurtici && isGunlukMode && (
-              <>
-                <input
-                  value={cityQuery}
-                  onChange={e=>setCityQuery(e.target.value)}
-                  placeholder="Şehir ara..."
-                  style={{width:"100%",padding:"8px 10px",marginBottom:8,border:"0.5px solid var(--color-border-secondary)",borderRadius:8,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t2)",boxSizing:"border-box"}}
-                />
-                <TurkeyMapPicker cityList={cityList} city={city} onSelect={setCity}/>
-              </>
+              <input
+                value={cityQuery}
+                onChange={e=>setCityQuery(e.target.value)}
+                placeholder="Şehir ara..."
+                style={{width:"100%",padding:"8px 10px",marginBottom:8,border:"0.5px solid var(--color-border-secondary)",borderRadius:8,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t2)",boxSizing:"border-box"}}
+              />
             )}
             <select value={city?.id||""} onChange={e=>{const c=cityList.find(x=>x.id===e.target.value);if(c)setCity(c);}}
               style={{width:"100%",padding:"11px 14px",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,background:"var(--color-background-primary)",color:"var(--color-text-primary)",fontSize:"var(--gg-t3)",fontFamily:"inherit",cursor:"pointer"}}>
@@ -1116,6 +1113,11 @@ Mevcut açıklama: ${slot?.desc || ""}`;
             </select>
           </div>
         </div>
+        {isYurtici && isGunlukMode && (
+          <div style={{marginTop:10}}>
+            <TurkeyMapPicker cityList={cityList} city={city} onSelect={setCity}/>
+          </div>
+        )}
         <div style={{marginBottom:20,marginTop:16,height:1,background:"linear-gradient(to right,transparent,#b5d4f4 20%,#b5d4f4 80%,transparent)",boxShadow:"0 2px 8px rgba(55,138,221,0.10)"}}/>
 
         <SLabel>Tarih</SLabel>
