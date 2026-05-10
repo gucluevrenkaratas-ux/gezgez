@@ -197,11 +197,98 @@ function normalizeTr(text) {
     .replace(/ü/g, "u");
 }
 
+const TR_CITY_ICONS = {
+  "adana":          "🌶️",  // acı biber, kebap
+  "adiyaman":       "🗿",  // Nemrut Dağı
+  "afyonkarahisar": "🥐",  // kaymak & pide
+  "agri":           "🏔️",  // Ağrı Dağı
+  "amasya":         "🍎",  // Amasya elması
+  "ankara":         "🏛️",  // Anıtkabir
+  "antalya":        "🏖️",  // plaj & turizm
+  "artvin":         "🌲",  // Kaçkar ormanları
+  "aydin":          "🏺",  // Efes & antik kent
+  "balikesir":      "🫒",  // zeytin
+  "bilecik":        "⚔️",  // Osmanlı kuruluşu
+  "bingol":         "🌸",  // yayla & doğa
+  "bitlis":         "🏔️",  // dağlar & Nemrut Gölü
+  "bolu":           "🌲",  // Abant & ormanlar
+  "burdur":         "🦩",  // flamingolar & Salda Gölü
+  "bursa":          "🌸",  // ipek & kiraz çiçeği
+  "canakkale":      "⚓",  // Çanakkale & Gelibolu
+  "cankiri":        "🧂",  // tuz mağaraları
+  "corum":          "🫘",  // Hitit & nohut
+  "denizli":        "🕊️",  // Pamukkale beyaz travertenleri
+  "diyarbakir":     "🍉",  // karpuz
+  "edirne":         "🕌",  // Selimiye Camii
+  "elazig":         "🍇",  // üzüm & Hazar Gölü
+  "erzincan":       "🧀",  // tulum peyniri
+  "erzurum":        "❄️",  // kayak & kar
+  "eskisehir":      "🚊",  // tramvay & öğrenci şehri
+  "gaziantep":      "🍽️",  // baklava & mutfak
+  "giresun":        "🌰",  // fındık
+  "gumushane":      "🔨",  // gümüş madenciliği
+  "hakkari":        "🦅",  // kartal & dağlar
+  "hatay":          "🫙",  // çok kültürlü mutfak
+  "isparta":        "🌹",  // gül & gül yağı
+  "mersin":         "🍊",  // narenciye
+  "istanbul":       "🕌",  // camiler & boğaz
+  "izmir":          "🌊",  // Ege & deniz
+  "kars":           "🧀",  // Kars gravyeri
+  "kastamonu":      "🌰",  // kestane
+  "kayseri":        "🥩",  // pastırma & mantı
+  "kirklareli":     "🌻",  // ayçiçeği
+  "kirsehir":       "🎵",  // Aşık Veysel & müzik
+  "kocaeli":        "🏭",  // sanayi
+  "konya":          "🌾",  // buğday & Mevlana
+  "kutahya":        "🏺",  // çini & seramik
+  "malatya":        "🍑",  // kayısı
+  "manisa":         "🍇",  // üzüm & bağ
+  "kahramanmaras":  "🍦",  // dondurma
+  "mardin":         "🪨",  // taş mimarisi
+  "mugla":          "🌿",  // çam balı & mavi yolculuk
+  "mus":            "🌷",  // lale & yayla
+  "nevsehir":       "🎈",  // sıcak hava balonu & Kapadokya
+  "nigde":          "🍎",  // elma
+  "ordu":           "🌰",  // fındık bahçeleri
+  "rize":           "🍵",  // çay
+  "sakarya":        "🌿",  // Sapanca & orman
+  "samsun":         "🚬",  // tütün & Atatürk'ün çıkış noktası → 🌊 daha iyi
+  "siirt":          "🥘",  // perde pilavı & büryan
+  "sinop":          "⚓",  // Karadeniz limanı
+  "sivas":          "🦁",  // Sivas arslanı & Divriği
+  "tekirdag":       "🍷",  // şarap & köfte
+  "tokat":          "🌶️",  // Tokat kebabı
+  "trabzon":        "🫐",  // Karadeniz & laz böreği
+  "tunceli":        "🏔️",  // Munzur dağları
+  "sanliurfa":      "🏛️",  // Göbekli Tepe & Balıklıgöl
+  "usak":           "🪡",  // kilim & dokuma
+  "van":            "🐱",  // Van kedisi
+  "yozgat":         "🌲",  // ormanlar
+  "zonguldak":      "⛏️",  // kömür madenciliği
+  "aksaray":        "🐪",  // İpek Yolu & deve
+  "bayburt":        "🏰",  // Bayburt Kalesi
+  "karaman":        "🥕",  // havuç
+  "kirikkale":      "🔧",  // makine & savunma sanayi
+  "batman":         "🛢️",  // petrol
+  "sirnak":         "⛰️",  // dağlık arazi
+  "bartin":         "🚢",  // Bartın Çayı & ahşap mimarisi
+  "ardahan":        "🐄",  // hayvancılık & süt ürünleri
+  "igdir":          "🍑",  // kayısı & nar
+  "yalova":         "🌹",  // çiçek & Atatürk köşkü
+  "karabuk":        "🏭",  // Karabük Demir Çelik
+  "kilis":          "🫒",  // zeytin
+  "osmaniye":       "🌾",  // tarım ovası
+  "duzce":          "🌿",  // yeşil doğa
+  "safranbolu":     "🏘️",  // tarihi konak evleri
+  "cappadocia":     "🎈",  // Kapadokya balonu
+  "bodrum":         "⛵",  // yelken & deniz
+};
+
 const CITIES_TR_GUNLUK = TR_PROVINCES.map((name) => {
   const id = slugifyTr(name);
   const existing = CITIES_TR.find((c) => c.id === id);
   if (existing) return existing;
-  return { id, name, flag: "🏙️", sky: "", booking: id };
+  return { id, name, flag: TR_CITY_ICONS[id] || "🏙️", sky: "", booking: id };
 });
 
 function TurkeyMapPicker({ cityList, city, onSelect }) {
@@ -273,7 +360,7 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
     if (svg) {
       svg.style.display = "block";
       svg.style.width = "100%";
-      svg.style.height = "80%";
+      svg.style.height = "auto";
       svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
     }
     const nodes = mapRef.current.querySelectorAll("[data-city-name], [data-iladi], [data-name], path[id], g[id]");
@@ -322,7 +409,7 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
 
     // Apply hover highlight to new node
     if (mapped && hoverNodeRef.current !== target) {
-      target.style.fill = mapped.id === city?.id ? "#5aaef5" : "#002640";
+      target.style.fill = mapped.id === city?.id ? "#5aaef5" : "#4db8ff";
       target.style.opacity = "1";
       target.style.filter = "drop-shadow(0 0 5px rgba(55,138,221,0.55))";
       target.style.transform = "scale(1.02)";
