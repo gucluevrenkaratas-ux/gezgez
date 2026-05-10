@@ -274,15 +274,7 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
       svg.style.display = "block";
       svg.style.width = "100%";
       svg.style.height = "auto";
-      // viewBox'taki sol boşluğu kırpıp haritayı yatayda ortala
       svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-      const vb = svg.getAttribute("viewBox");
-      if (vb) {
-        const [x, y, w, h] = vb.split(/[\s,]+/).map(Number);
-        // sol ve sağdaki fazla boşluğu ~%8 kırp, yatayda ortala
-        const trim = w * 0.06;
-        svg.setAttribute("viewBox", `${x + trim} ${y} ${w - trim * 2} ${h}`);
-      }
     }
     const nodes = mapRef.current.querySelectorAll("[data-city-name], [data-iladi], [data-name], path[id], g[id]");
     nodes.forEach((n) => {
@@ -376,7 +368,7 @@ function TurkeyMapPicker({ cityList, city, onSelect }) {
             {hoverName ? `İl: ${hoverName}` : "İlin üstüne gelin veya tıklayın"} · Sürükleyerek kaydırabilirsiniz
           </p>
           <div
-            style={{width:"100%",height:280,overflow:"hidden",background:"#eef6ff",borderRadius:8,cursor:dragging?"grabbing":"grab",position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}
+            style={{width:"100%",height:340,overflow:"hidden",background:"#eef6ff",borderRadius:8,cursor:dragging?"grabbing":"grab",position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}
             onMouseDown={startDrag}
             onMouseMove={moveDrag}
             onMouseUp={endDrag}
